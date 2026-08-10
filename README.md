@@ -10,3 +10,4 @@ make feeding you Pet smart
 - Feed now Menge direkt bestimmen können
 - "Welche Events loggen?" und Dauer zusammenfassen, ausklappbar machen oder unter Logs schieben
 - "Kanäle konfigurieren" mit in Einstellungen packen oder ausklappbar machen.
+- aktuelle Uhrzeit mit (kleinen) Sekunden anzeigen lassen
