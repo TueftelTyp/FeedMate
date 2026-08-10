@@ -1,4 +1,4 @@
 # FeedMate
 make feeding you Pet smart 
 ---
-[![license](https://img.shields.io/badge/license-CC--BY--NC--SA--4.0-blue)](https://github.com/TueftelTyp/FeedMate/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/License-CC--BY--NC--SA--4.0-c38041?style=flat&labelColor=707070)](https://github.com/TueftelTyp/FeedMate/blob/main/LICENSE) [![Made for](https://img.shields.io/badge/Made%20for-ESPHome-4168c3?style=flat&labelColor=66a861)](https://esphome.io/)
