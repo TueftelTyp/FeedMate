@@ -424,7 +424,23 @@ TP4056 OUT ────────── MT3608 IN
 | **Total** | | **~35€** | |
 
 ---
+### Important Notes:
 
+1. **Upload HTML:** You must save the HTML from Parts 1 & 2 as `index.html`, compress it with gzip, and upload it to the ESP using the **ESP8266 LittleFS Uploader** plugin in the Arduino IDE.
+2. **Install Libraries:**
+
+   * `RTClib` by Adafruit
+   * `PubSubClient` by Nick O'Leary
+   * `ArduinoJson` by Benoit Blanchon (v6.x)
+   * `NTPClient` by Fabrice Weinberg
+3. **Board Settings:**
+
+   * Board: LOLIN(WEMOS) D1 R2 & mini
+   * Flash Size: 4MB (FS:2MB OTA:~1019KB)
+   * Upload Speed: 921600
+   *
+
+---
 ## Next Steps
 
 After completing the hardware:
