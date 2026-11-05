@@ -1,0 +1,219 @@
+Processing esp32dev (platform: espressif32@6.10.0; board: esp32dev; framework: arduino)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+PLATFORM: Espressif 32 (6.10.0) > Espressif ESP32 Dev Module
+HARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+DEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+ - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 38 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- ArduinoJson @ 6.21.5
+|-- PubSubClient @ 2.8.0
+|-- RTClib @ 2.1.4
+|-- Adafruit BusIO @ 1.16.1
+|-- LittleFS @ 2.0.0
+|-- WiFi @ 2.0.0
+|-- Wire @ 2.0.0
+|-- WebServer @ 2.0.0
+Building in release mode
+Compiling .pio\build\esp32dev\src\main.cpp.o
+Compiling .pio\build\esp32dev\src\sensors.cpp.o
+Linking .pio\build\esp32dev\firmware.elf
+Retrieving maximum program size .pio\build\esp32dev\firmware.elf
+Checking size .pio\build\esp32dev\firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [==        ]  17.4% (used 57088 bytes from 327680 bytes)
+Flash: [=======   ]  70.1% (used 918653 bytes from 1310720 bytes)
+Building .pio\build\esp32dev\firmware.bin with action:
+  "$PYTHONEXE" "$OBJCOPY" --chip esp32 elf2image --flash_mode ${__get_board_flash_mode(__env__)} --flash_freq ${__get_board_f_image(__env__)} --flash_size 4MB --elf-sha256-offset 0xb0 -o $TARGET $SOURCES
+Building .pio\build\esp32dev\firmware.bin
+esptool.py v4.5.1
+Creating esp32 image...
+Merged 27 ELF sections
+Successfully created esp32 image.
+========================= [SUCCESS] Took 18.87 seconds =========================
+
+Processing d1_mini (platform: espressif8266@4.2.1; board: d1_mini; framework: arduino)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif8266/d1_mini.html
+PLATFORM: Espressif 8266 (4.2.1) > WeMos D1 R2 and mini
+HARDWARE: ESP8266 80MHz, 80KB RAM, 4MB Flash
+PACKAGES: 
+ - framework-arduinoespressif8266 @ 3.30102.0 (3.1.2) 
+ - tool-esptool @ 1.413.0 (4.13) 
+ - tool-esptoolpy @ 1.30000.201119 (3.0.0) 
+ - toolchain-xtensa @ 2.100300.220621 (10.3.0)
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 42 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- ArduinoJson @ 6.21.5
+|-- PubSubClient @ 2.8.0
+|-- RTClib @ 2.1.4
+|-- Adafruit BusIO @ 1.16.1
+|-- LittleFS @ 0.1.0
+|-- ESP8266WiFi @ 1.0
+|-- Wire @ 1.0
+|-- ESP8266WebServer @ 1.0
+Building in release mode
+Compiling .pio\build\d1_mini\src\main.cpp.o
+Compiling .pio\build\d1_mini\src\mqtt_client.cpp.o
+Compiling .pio\build\d1_mini\src\schedule.cpp.o
+Compiling .pio\build\d1_mini\src\sensors.cpp.o
+Compiling .pio\build\d1_mini\src\storage.cpp.o
+Compiling .pio\build\d1_mini\src\webserver.cpp.o
+Generating LD script .pio\build\d1_mini\ld\local.eagle.app.v6.common.ld
+Compiling .pio\build\d1_mini\lib868\PubSubClient\PubSubClient.cpp.o
+Compiling .pio\build\d1_mini\lib34e\Wire\Wire.cpp.o
+Compiling .pio\build\d1_mini\libdac\SPI\SPI.cpp.o
+Compiling .pio\build\d1_mini\libce7\Adafruit BusIO@1.16.1\Adafruit_BusIO_Register.cpp.o
+Compiling .pio\build\d1_mini\libce7\Adafruit BusIO@1.16.1\Adafruit_I2CDevice.cpp.o
+Compiling .pio\build\d1_mini\libce7\Adafruit BusIO@1.16.1\Adafruit_SPIDevice.cpp.o
+.pio\libdeps\d1_mini\PubSubClient\src\PubSubClient.cpp: In member function 'boolean PubSubClient::publish_P(const char*, const uint8_t*, unsigned int, boolean)':
+.pio\libdeps\d1_mini\PubSubClient\src\PubSubClient.cpp:523:16: warning: comparison of integer expressions of different signedness: 'unsigned int' and 'int' [-Wsign-compare]
+  523 |     return (rc == expectedLength);
+      |             ~~~^~~~~~~~~~~~~~~~~
+Archiving .pio\build\d1_mini\lib34e\libWire.a
+Archiving .pio\build\d1_mini\libdac\libSPI.a
+Compiling .pio\build\d1_mini\lib76a\RTClib\RTC_DS1307.cpp.o
+Compiling .pio\build\d1_mini\lib76a\RTClib\RTC_DS3231.cpp.o
+Compiling .pio\build\d1_mini\lib76a\RTClib\RTC_Micros.cpp.o
+Archiving .pio\build\d1_mini\libce7\libAdafruit BusIO@1.16.1.a
+Compiling .pio\build\d1_mini\lib76a\RTClib\RTC_Millis.cpp.o
+Archiving .pio\build\d1_mini\lib868\libPubSubClient.a
+Compiling .pio\build\d1_mini\lib76a\RTClib\RTC_PCF8523.cpp.o
+Compiling .pio\build\d1_mini\lib76a\RTClib\RTC_PCF8563.cpp.o
+Compiling .pio\build\d1_mini\lib76a\RTClib\RTClib.cpp.o
+Compiling .pio\build\d1_mini\lib5f6\LittleFS\LittleFS.cpp.o
+Compiling .pio\build\d1_mini\lib5f6\LittleFS\lfs.c.o
+Compiling .pio\build\d1_mini\lib5f6\LittleFS\lfs_util.c.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\BearSSLHelpers.cpp.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\CertStoreBearSSL.cpp.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\ESP8266WiFi.cpp.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\ESP8266WiFiAP.cpp.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\ESP8266WiFiGeneric.cpp.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\ESP8266WiFiGratuitous.cpp.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\ESP8266WiFiMulti.cpp.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\ESP8266WiFiSTA-WPS.cpp.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\ESP8266WiFiSTA.cpp.o
+Archiving .pio\build\d1_mini\lib76a\libRTClib.a
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\ESP8266WiFiScan.cpp.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\WiFiClient.cpp.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\WiFiClientSecureBearSSL.cpp.o
+Archiving .pio\build\d1_mini\lib5f6\libLittleFS.a
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\WiFiServer.cpp.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\WiFiServerSecureBearSSL.cpp.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\WiFiUdp.cpp.o
+Compiling .pio\build\d1_mini\lib89b\ESP8266WiFi\enable_wifi_at_boot_time.cpp.o
+Compiling .pio\build\d1_mini\lib4bf\ESP8266WebServer\detail\mimetable.cpp.o
+Archiving .pio\build\d1_mini\lib4bf\libESP8266WebServer.a
+Archiving .pio\build\d1_mini\libFrameworkArduinoVariant.a
+Compiling .pio\build\d1_mini\FrameworkArduino\Crypto.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\Esp-frag.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\Esp-version.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\Esp.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\FS.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\FSnoop.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\FunctionalInterrupt.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\HardwareSerial.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\IPAddress.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\LwipDhcpServer-NonOS.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\LwipDhcpServer.cpp.o
+Archiving .pio\build\d1_mini\lib89b\libESP8266WiFi.a
+Compiling .pio\build\d1_mini\FrameworkArduino\LwipIntf.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\LwipIntfCB.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\MD5Builder.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\Print.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\Schedule.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\StackThunk.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\Stream.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\StreamSend.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\Tone.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\TypeConversion.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\Updater.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\WMath.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\WString.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\abi.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\aes_unwrap.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\base64.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\cbuf.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\cont.S.o
+Compiling .pio\build\d1_mini\FrameworkArduino\cont_util.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_app_entry_noextra4k.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_eboot_command.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_features.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_flash_quirks.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_flash_utils.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_i2s.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_main.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_non32xfer.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_noniso.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_phy.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_postmortem.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_si2c.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_sigma_delta.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_spi_utils.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_timer.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_vm.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_waveform_phase.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_waveform_pwm.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_wiring.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_wiring_analog.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_wiring_digital.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_wiring_pulse.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_wiring_pwm.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\core_esp8266_wiring_shift.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\crc32.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\debug.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\exc-c-wrapper-handler.S.o
+Compiling .pio\build\d1_mini\FrameworkArduino\exc-sethandler.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\flash_hal.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\gdb_hooks.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\heap.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\hwdt_app_entry.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\libb64\cdecode.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\libb64\cencode.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\libc_replacements.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\mmu_iram.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\reboot_uart_dwnld.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\spiffs\spiffs_cache.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\spiffs\spiffs_check.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\spiffs\spiffs_gc.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\spiffs\spiffs_hydrogen.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\spiffs\spiffs_nucleus.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\spiffs_api.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\sqrt32.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\stdlib_noniso.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\time.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\uart.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\umm_malloc\umm_info.c.o
+Compiling .pio\build\d1_mini\FrameworkArduino\umm_malloc\umm_integrity.c.o
+Compiling .pio\build\d1_mini\FrameworkArduino\umm_malloc\umm_local.c.o
+Compiling .pio\build\d1_mini\FrameworkArduino\umm_malloc\umm_malloc.cpp.o
+Compiling .pio\build\d1_mini\FrameworkArduino\umm_malloc\umm_poison.c.o
+Compiling .pio\build\d1_mini\FrameworkArduino\wpa2_eap_patch.cpp.o
+Archiving .pio\build\d1_mini\libFrameworkArduino.a
+Linking .pio\build\d1_mini\firmware.elf
+Retrieving maximum program size .pio\build\d1_mini\firmware.elf
+Checking size .pio\build\d1_mini\firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [=====     ]  52.6% (used 43064 bytes from 81920 bytes)
+Flash: [====      ]  37.6% (used 393007 bytes from 1044464 bytes)
+Building .pio\build\d1_mini\firmware.bin
+Creating BIN file ".pio\build\d1_mini\firmware.bin" using "<PIO_CORE>\packages\framework-arduinoespressif8266\bootloaders\eboot\eboot.elf" and ".pio\build\d1_mini\firmware.elf"
+========================= [SUCCESS] Took 24.81 seconds =========================
+
+Environment    Status    Duration
+-------------  --------  ------------
+esp32dev       SUCCESS   00:00:18.868
+d1_mini        SUCCESS   00:00:24.815
+========================= 2 succeeded in 00:00:43.683 =========================

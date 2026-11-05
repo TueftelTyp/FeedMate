@@ -38,7 +38,7 @@ Anmelden, Einstellungen laden und JSON bearbeiten. Secrets sind in GET-Antworten
 
 Nach Speichern das Gerät neu starten, um Netzwerk und Zeitzone konsistent anzuwenden. Ohne funktionsfähige RTC zunächst auf Netzwerkzeitsynchronisation warten und `clockValid` im Status prüfen. Fehlende RTC wird im Status angezeigt; eine bereits synchronisierte Systemuhr läuft bis zum nächsten Neustart weiter. Die RTC muss eine unabhängig erhaltene Versorgung besitzen, wenn sie einen vollständigen Stromausfall überbrücken soll. Hinweise der ursprünglichen Hardwareanleitung zu pauschalem Entfernen der RTC-Batterie sind keine Garantie für Offline-Zeit.
 
-Passwortänderung: `adminPassword` als neues Klartextpasswort mit 16 bis 128 Zeichen mitsenden. Danach erneut anmelden. Bei Verlust des Passworts gibt es absichtlich keinen unauthentifizierten Netzwerk-Reset; eine kontrollierte Neueinrichtung über USB ist erforderlich.
+Passwortänderung: In den Einstellungen ein neues Admin-Passwort mit 16 bis 128 Zeichen eintragen. Danach erneut anmelden. Bei Verlust des Passworts Gerät über USB verbinden, seriellen Monitor (115200 Baud) öffnen und neu starten. Der Start zeigt einen neuen `RECOVERY CODE FOR THIS BOOT`. Auf dem Smartphone „Passwort vergessen?“ öffnen, Code und neues Passwort eingeben. Der Code gilt nur bis zum nächsten Neustart, höchstens fünf falsche Versuche sind möglich, und ein erfolgreicher Reset verbraucht ihn. Für einen erneuten Versuch nach Verbrauch des Codes physisch neu starten. Das bisherige Passwort wird nicht im Klartext wieder ausgegeben.
 
 ## Erstprüfung ohne Futter
 

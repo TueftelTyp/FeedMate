@@ -1,0 +1,66 @@
+Processing esp32dev (platform: espressif32@6.10.0; board: esp32dev; framework: arduino)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+PLATFORM: Espressif 32 (6.10.0) > Espressif ESP32 Dev Module
+HARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+DEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+ - tool-mklittlefs @ 1.203.210628 (2.3) 
+ - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 38 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- ArduinoJson @ 6.21.5
+|-- PubSubClient @ 2.8.0
+|-- RTClib @ 2.1.4
+|-- Adafruit BusIO @ 1.16.1
+|-- LittleFS @ 2.0.0
+|-- WiFi @ 2.0.0
+|-- Wire @ 2.0.0
+|-- WebServer @ 2.0.0
+Building in release mode
+Building FS image from 'data' directory to .pio\build\esp32dev\littlefs.bin
+/index.html
+========================= [SUCCESS] Took 3.14 seconds =========================
+
+Processing d1_mini (platform: espressif8266@4.2.1; board: d1_mini; framework: arduino)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif8266/d1_mini.html
+PLATFORM: Espressif 8266 (4.2.1) > WeMos D1 R2 and mini
+HARDWARE: ESP8266 80MHz, 80KB RAM, 4MB Flash
+PACKAGES: 
+ - framework-arduinoespressif8266 @ 3.30102.0 (3.1.2) 
+ - tool-esptool @ 1.413.0 (4.13) 
+ - tool-esptoolpy @ 1.30000.201119 (3.0.0) 
+ - tool-mklittlefs @ 1.203.210628 (2.3) 
+ - tool-mkspiffs @ 1.200.0 (2.0) 
+ - toolchain-xtensa @ 2.100300.220621 (10.3.0)
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 42 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- ArduinoJson @ 6.21.5
+|-- PubSubClient @ 2.8.0
+|-- RTClib @ 2.1.4
+|-- Adafruit BusIO @ 1.16.1
+|-- LittleFS @ 0.1.0
+|-- ESP8266WiFi @ 1.0
+|-- Wire @ 1.0
+|-- ESP8266WebServer @ 1.0
+Building in release mode
+Building file system image from 'data' directory to .pio\build\d1_mini\littlefs.bin
+/index.html
+========================= [SUCCESS] Took 2.87 seconds =========================
+
+Environment    Status    Duration
+-------------  --------  ------------
+esp32dev       SUCCESS   00:00:03.136
+d1_mini        SUCCESS   00:00:02.870
+========================= 2 succeeded in 00:00:06.006 =========================

@@ -38,6 +38,7 @@
 #define CONFIG_FILE             "/config.json"
 #define SCHEDULE_FILE           "/schedule.json"
 #define LOG_FILE                "/events.log"
+#define FOODS_FILE              "/foods.json"
 #define HTML_FILE               "/index.html"
 #define MAX_LOG_ENTRIES         100
 
@@ -66,8 +67,11 @@ struct FeedingSlot {
     bool active;
     uint8_t hour;
     uint8_t minute;
+    uint8_t second;
     uint16_t durationMs;
     uint32_t lastRunDate;
+    char foodName[33];
+    float portionGrams;
 };
 
 struct LogEntry {
@@ -104,6 +108,8 @@ struct FeedMateConfig {
     uint16_t deepSleepMinutes;
     char timezone[33];
     char adminPassword[65];  // SHA256 Hash
+    char deviceName[33];
+    char fleetKeyHash[65];
     
     // SMTP
     char smtpServer[65];
@@ -152,7 +158,8 @@ extern WiFiUDP ntpUDP;
 // GLOBAL STATE
 // ============================================================================
 extern FeedMateConfig config;
-extern FeedingSlot schedule[8];
+constexpr uint8_t MAX_SCHEDULE_ENTRIES = 32;
+extern FeedingSlot schedule[MAX_SCHEDULE_ENTRIES];
 extern LogEntry eventLog[MAX_LOG_ENTRIES];
 extern uint8_t logCount;
 extern uint8_t logIndex;
@@ -196,8 +203,10 @@ void setupMQTT();
 void serviceMQTT();
 void publishMQTTStatus();
 void checkSchedule();
+bool estimateFood(const char* name,double grams,uint16_t& duration,uint8_t& target);
 bool startMotor(uint16_t durationMs);
 bool requestMotor(uint16_t durationMs);
+bool requestMotor(uint16_t durationMs, uint8_t targetRotations);
 void serviceMotorRequest();
 void stopMotor(bool success = false, const char* reason = "Feeding aborted");
 void serviceMotor();

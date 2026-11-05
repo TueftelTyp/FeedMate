@@ -4,15 +4,21 @@ static uint32_t lastPulse=0;
 static bool jamTiming=false;
 static bool hallAttached=false;
 static uint16_t pendingDuration=0;
-bool requestMotor(uint16_t durationMs) {
+static uint8_t pendingRotations=255,activeRotations=0;
+bool requestMotor(uint16_t durationMs) { return requestMotor(durationMs,255); }
+bool requestMotor(uint16_t durationMs,uint8_t targetRotations) {
     if(pendingDuration || motorRunning || jamActive || !storageReady || digitalRead(PIN_JAM_SENSOR) || !logic::durationValid(durationMs)) return false;
+    if(targetRotations!=255 && ((!config.endSwitchEnabled && targetRotations) || targetRotations>config.maxRotations)) return false;
     pendingDuration=durationMs;
+    pendingRotations=targetRotations;
     return true;
 }
 void serviceMotorRequest() {
     if(!pendingDuration) return;
     uint16_t duration=pendingDuration; pendingDuration=0;
-    if(!startMotor(duration)) addLogEntry(EVT_FEEDING_ABORTED,"Queued feed rejected by motor controller");
+    uint8_t target=pendingRotations; pendingRotations=255;
+    if(startMotor(duration)) { if(target!=255) activeRotations=target; }
+    else addLogEntry(EVT_FEEDING_ABORTED,"Queued feed rejected by motor controller");
 }
 void IRAM_ATTR hallInterrupt() {
     uint32_t now=micros();
@@ -28,6 +34,7 @@ bool startMotor(uint16_t durationMs) {
     noInterrupts(); hallEdges=0; lastHallMicros=micros(); interrupts();
     rotationCount=0; jamTiming=false; motorStartTime=millis(); lastPulse=motorStartTime;
     motorDuration=durationMs; motorRunning=true;
+    activeRotations=config.endSwitchEnabled?config.rotationsPerPortion:0;
     digitalWrite(PIN_MOTOR_GATE,HIGH);
     return true;
 }
@@ -56,11 +63,11 @@ void serviceMotor() {
         noInterrupts(); uint32_t count=hallEdges; interrupts();
         if(count!=rotationCount) { rotationCount=count; lastPulse=now; }
         if(count>config.maxRotations) { fault("Hall rotation limit exceeded"); return; }
-        if(count>=config.rotationsPerPortion) { stopMotor(true,"Target rotations reached; quantity not measured"); return; }
+        if(activeRotations && count>=activeRotations) { stopMotor(true,"Target rotations reached; quantity not measured"); return; }
         if(logic::expired(now,lastPulse,1500)) { fault("No Hall pulses for 1500 ms"); return; }
     }
     if(logic::expired(now,motorStartTime,motorDuration)) {
-        if(config.endSwitchEnabled) fault("Time limit before target rotations");
+        if(config.endSwitchEnabled && activeRotations) fault("Time limit before target rotations");
         else stopMotor(true,"Timed motor cycle completed; quantity not measured");
     }
 }

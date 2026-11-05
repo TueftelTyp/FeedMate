@@ -1,7 +1,7 @@
 #include "config.h"
 
 FeedMateConfig config;
-FeedingSlot schedule[8];
+FeedingSlot schedule[MAX_SCHEDULE_ENTRIES];
 LogEntry eventLog[MAX_LOG_ENTRIES];
 uint8_t logCount = 0;
 uint8_t logIndex = 0;
@@ -96,6 +96,8 @@ void loadConfig() {
     config.deepSleepMinutes = doc["deepSleepMinutes"] | 0;
     strlcpy(config.timezone, doc["timezone"] | "UTC", sizeof(config.timezone));
     strlcpy(config.adminPassword, doc["adminPassword"] | "", sizeof(config.adminPassword));
+    strlcpy(config.deviceName, doc["deviceName"] | "FeedMate", sizeof(config.deviceName));
+    strlcpy(config.fleetKeyHash, doc["fleetKeyHash"] | "", sizeof(config.fleetKeyHash));
     
     // SMTP
     strlcpy(config.smtpServer, doc["smtpServer"] | "", sizeof(config.smtpServer));
@@ -162,6 +164,8 @@ bool saveConfig() {
     doc["deepSleepMinutes"] = config.deepSleepMinutes;
     doc["timezone"] = String(config.timezone);
     doc["adminPassword"] = String(config.adminPassword);
+    doc["deviceName"] = String(config.deviceName);
+    doc["fleetKeyHash"] = String(config.fleetKeyHash);
     
     // SMTP
     doc["smtpServer"] = String(config.smtpServer);
@@ -200,29 +204,34 @@ void loadSchedule() {
         return;
     }
     File f = LittleFS.open(SCHEDULE_FILE, "r");
-    DynamicJsonDocument doc(3072);
-    if (!f || deserializeJson(doc, f) || !doc["slots"].is<JsonArray>() || doc["slots"].size() != 8) {
+    DynamicJsonDocument doc(12288);
+    if (!f || deserializeJson(doc, f) || !doc["slots"].is<JsonArray>() || doc["slots"].size() > MAX_SCHEDULE_ENTRIES) {
         storageReady = false; return;
     }
-    for (int i=0;i<8;i++) {
+    JsonArray slots=doc["slots"].as<JsonArray>();
+    for (size_t i=0;i<slots.size();i++) {
         JsonObject slot = doc["slots"][i];
-        long hour=slot["hour"] | -1, minute=slot["minute"] | -1, duration=slot["duration"] | 0;
-        if (hour<0 || hour>23 || minute<0 || minute>59 || !logic::durationValid(duration)) {
+        long hour=slot["hour"] | -1, minute=slot["minute"] | -1, second=slot["second"] | 0, duration=slot["duration"] | MOTOR_DEFAULT_DURATION_MS;
+        if (hour<0 || hour>23 || minute<0 || minute>59 || second<0 || second>59 || !logic::durationValid(duration)) {
             storageReady=false; setDefaultSchedule(); return;
         }
-        schedule[i] = {slot["active"] | false, uint8_t(hour), uint8_t(minute), uint16_t(duration), slot["lastRunDate"] | 0U};
+        schedule[i] = {slot["active"] | false, uint8_t(hour), uint8_t(minute), uint8_t(second), uint16_t(duration), slot["lastRunDate"] | 0U};
+        strlcpy(schedule[i].foodName,slot["foodName"] | "",sizeof(schedule[i].foodName));
+        schedule[i].portionGrams=slot["portionGrams"] | 0.0f;
+        if(schedule[i].foodName[0] && (schedule[i].portionGrams<=0 || schedule[i].portionGrams>500)) {storageReady=false;return;}
         // Legacy schedules require explicit review before enabling.
         if (!slot.containsKey("lastRunDate")) schedule[i].active = false;
     }
 }
 
 bool saveSchedule() {
-    DynamicJsonDocument doc(3072);
+    DynamicJsonDocument doc(12288);
     JsonArray arr = doc.createNestedArray("slots");
     for (const auto& item : schedule) {
         JsonObject slot = arr.createNestedObject();
-        slot["active"]=item.active; slot["hour"]=item.hour; slot["minute"]=item.minute;
+        slot["active"]=item.active; slot["hour"]=item.hour; slot["minute"]=item.minute; slot["second"]=item.second;
         slot["duration"]=item.durationMs; slot["lastRunDate"]=item.lastRunDate;
+        slot["foodName"]=item.foodName; slot["portionGrams"]=item.portionGrams;
     }
     return atomicJson(SCHEDULE_FILE, doc);
 }
@@ -282,6 +291,7 @@ void setDefaultConfig() {
     config.maxRotations = 50;
     config.deepSleepMinutes = 0;
     strlcpy(config.timezone, "UTC", sizeof(config.timezone));
+    strlcpy(config.deviceName, "FeedMate", sizeof(config.deviceName));
     config.smtpPort = 587;
     config.smtpEncryption = 1;
     strlcpy(config.updateSource, "github", sizeof(config.updateSource));
@@ -297,11 +307,14 @@ void setDefaultConfig() {
 }
 
 void setDefaultSchedule() {
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < MAX_SCHEDULE_ENTRIES; i++) {
         schedule[i].active = false;
         schedule[i].hour = 0;
         schedule[i].minute = 0;
+        schedule[i].second = 0;
         schedule[i].durationMs = MOTOR_DEFAULT_DURATION_MS;
         schedule[i].lastRunDate = 0;
+        schedule[i].foodName[0] = 0;
+        schedule[i].portionGrams = 0;
     }
 }
