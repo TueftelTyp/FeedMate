@@ -1,0 +1,20 @@
+<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>FeedMate</title>
+<style>body{font:16px system-ui;max-width:850px;margin:2rem auto;padding:0 1rem;background:#f4f7f5;color:#203329}button,input,textarea{font:inherit;padding:.6rem;margin:.3rem}button{cursor:pointer}textarea{width:95%;height:18rem}pre{white-space:pre-wrap;background:white;padding:1rem}section{padding:1rem 0;border-bottom:1px solid #ccc}</style>
+<h1>FeedMate</h1><p>Lokale Steuerung · Während einer Fütterung sind Netzwerkabfragen pausiert.</p>
+<section><input id="password" type="password" autocomplete="current-password" placeholder="Admin-Passwort"><button id="login">Anmelden</button><button id="logout">Abmelden</button><p>Das erste Passwort wird einmalig über USB/Serial ausgegeben (115200 Baud).</p></section>
+<p id="message" role="status"></p><section><button id="status">Status laden</button><pre id="state"></pre><label>Dauer in ms <input id="duration" type="number" min="1" max="30000" value="3000"></label><button id="feed">Füttern</button><button id="reset">Fehler quittieren</button></section>
+<section><h2>Zeitplan</h2><p>Acht feste Slots; Zeitangaben gelten in der konfigurierten Zeitzone. Reservierte Slots werden am selben Tag nicht erneut ausgeführt.</p><button id="loadSchedule">Laden</button><button id="saveSchedule">Speichern</button><textarea id="schedule" aria-label="Zeitplan JSON"></textarea></section>
+<section><h2>Einstellungen</h2><p>JSON bearbeiten. WLAN-/MQTT-Passwörter können als wifiPassword/mqttPassword ergänzt werden; adminPassword ändert das Admin-Passwort (mindestens 16 Zeichen). Netzwerk- und Zeitzonenänderungen benötigen einen Neustart. UTC: UTC0; Deutschland: CET-1CEST,M3.5.0,M10.5.0/3.</p><button id="loadConfig">Laden</button><button id="saveConfig">Speichern</button><textarea id="config" aria-label="Konfiguration JSON"></textarea></section>
+<section><button id="logs">Ereignisse laden</button><pre id="events"></pre></section>
+<script>
+let token='';const $=id=>document.getElementById(id);
+async function api(route,body){const response=await fetch('/api/'+route,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:body===undefined?undefined:JSON.stringify(body)});const text=await response.text();let data=text?JSON.parse(text):{};if(!response.ok)throw Error(data.error||response.status);return data;}
+function action(id,fn){$(id).onclick=async()=>{try{$('message').textContent='Bitte warten …';await fn();$('message').textContent='Erledigt.';}catch(e){$('message').textContent=e.message;}};}
+action('login',async()=>{token=(await api('login',{password:$('password').value})).token;$('password').value='';});
+action('logout',async()=>{await api('logout',{});token='';});
+action('status',async()=>{$('state').textContent=JSON.stringify(await api('status'),null,2);});
+action('feed',async()=>{await api('feed',{duration:Number($('duration').value)});});
+action('reset',async()=>{await api('reset-fault',{});});
+for(const [kind,field] of [['Schedule','schedule'],['Config','config']]){action('load'+kind,async()=>{$(field).value=JSON.stringify(await api(field),null,2);});action('save'+kind,async()=>{const result=await api(field,JSON.parse($(field).value));if(result.status)alert(result.status);});}
+action('logs',async()=>{$('events').textContent=JSON.stringify(await api('logs'),null,2);});
+</script></html>
