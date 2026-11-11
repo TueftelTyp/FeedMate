@@ -1,5 +1,0 @@
-.pio/
-tests/build/
-.zig-cache/
-*.obj
-*.exe
