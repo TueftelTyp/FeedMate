@@ -1,10 +1,10 @@
-# FeedMate v1.13 installieren
+# FeedMate v1.15 installieren
 
 Diese Anleitung gilt für den klassischen **ESP32 DevKit / ESP32-WROOM-32** und den **WeMos D1 mini / ESP8266**. Der ESP32 ist das empfohlene Standardziel. ESP32-C3, S2, S3, C6 und andere Pinbelegungen benötigen Anpassungen.
 
 ## 1. Benötigt
 
-- FeedMate-v1.13-Projektordner vollständig entpackt
+- FeedMate-v1.15-Projektordner vollständig entpackt
 - USB-Datenkabel; reine Ladekabel funktionieren nicht
 - Visual Studio Code mit der Erweiterung **PlatformIO IDE** oder PlatformIO Core 6.x
 - passender USB-Treiber für den verwendeten CP210x-/CH340-Adapter
@@ -146,7 +146,7 @@ Die Geräte müssen im selben erreichbaren lokalen Netz liegen. HTTP und MQTT si
 
 ## 11. Demo verwenden
 
-`FeedMate-Demo-v1.13.html` kann ohne ESP direkt im Browser geöffnet werden. Kennwort: `admin`. Nur in der Demo dürfen nicht existente Automaten hinzugefügt werden; Status, Fütterung und Zeitplanübertragung werden lokal simuliert. Diese Demo-Funktion ist nicht Bestandteil der produktiven `data/index.html`.
+`FeedMate-Demo-v1.15.html` kann ohne ESP direkt im Browser geöffnet werden. Kennwort: `admin`. Nur in der Demo dürfen nicht existente Automaten hinzugefügt werden; Status, Fütterung und Zeitplanübertragung werden lokal simuliert. Diese Demo-Funktion ist nicht Bestandteil der produktiven `data/index.html`.
 
 ## 12. Häufige Probleme
 

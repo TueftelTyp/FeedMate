@@ -1,5 +1,12 @@
 # Änderungen vom 05.11.2026
 
+## v1.15 – Bereinigtes Release-Paket
+
+- Historischen Ordner `code/old` aus dem Release entfernt.
+- Frühere `INSTALLATION-v*.md`- und `VERSION-*.md`-Dateien aus dem Release entfernt.
+- Nur die aktuelle Installationsanleitung und Versionsübersicht beigelegt.
+- Aktuellen Quellcode, Plattformkonfiguration, Dokumentation und Prüfprogramme beibehalten.
+
 ## v1.14 – Kompakte Entfernen-Symbole
 
 - Große „Entfernen“-Schaltflächen in der Automatenansicht durch Mülleimer-Symbole ersetzt.

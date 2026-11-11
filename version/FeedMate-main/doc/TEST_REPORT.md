@@ -1,5 +1,11 @@
 # Testbericht – 05.11.2026
 
+## Ergänzung v1.15
+
+- Release-Inhalt auf historische Quellcodekopien und frühere versionsgebundene Dokumente geprüft.
+- Vollständigkeit von aktuellem Quellcode, `data/index.html`, Demo, PlatformIO-Konfiguration und Installationsanleitung geprüft.
+- Release-ZIP auf Build-Caches und Alt-Dateien geprüft.
+
 ## Ergänzung v1.14
 
 - Produkt- und Demooberfläche zeigen in Geräte-/Automatenkarten ausschließlich kompakte Mülleimer-Symbole.
@@ -64,7 +70,7 @@ Nach Smartphone-Formularen und Wiederherstellungscode erneut geprüft: ESP32- un
 
 ## Umfang
 
-Bearbeitet wurde die tatsächlich bereitgestellte FeedMate-main.zip, nicht nur der öffentliche GitHub-Stand. Ursprüngliche Dateien, Lizenz und historische Varianten bleiben enthalten. Aktive Firmware, Buildkonfiguration, Weboberfläche, Tests und Dokumentation wurden überarbeitet. Auf Wunsch ist ESP32 jetzt Standardziel; ESP8266 bleibt unterstützt.
+Bearbeitet wurde die tatsächlich bereitgestellte FeedMate-main.zip, nicht nur der öffentliche GitHub-Stand. Das aktuelle Release enthält aktive Firmware, Buildkonfiguration, Weboberfläche, Tests und Dokumentation. Historische Quellcodekopien und frühere versionsgebundene Dokumente sind seit v1.15 nicht mehr Bestandteil des Release-ZIP. ESP32 ist Standardziel; ESP8266 bleibt unterstützt.
 
 Die Prüfungen liefen auf Windows ohne angeschlossene FeedMate-Hardware. Eine Buildfreigabe ist keine Hardwarefreigabe.
 
@@ -77,7 +83,7 @@ Die Prüfungen liefen auf Windows ohne angeschlossene FeedMate-Hardware. Eine Bu
 | C++17-Tests der Produktionslogik | 64 Assertions bestanden (v1.2) |
 | JavaScript der ausgelieferten Weboberfläche | Syntaxprüfung mit Node.js bestanden |
 
-Dateisystem-Builds und endgültige Speicherwerte werden in `validation/SUMMARY.txt` ausgewiesen. Die Buildprotokolle liegen ebenfalls unter `validation/`.
+Für v1.15 wurden die LittleFS-Abbilder für ESP32 und ESP8266 erneut erfolgreich erzeugt. Zusätzlich wurden die JavaScript-Syntax sowie der bereinigte Archivinhalt geprüft. Lokale Build-Caches und ältere Buildprotokolle werden bewusst nicht ausgeliefert.
 
 Verwendet: PlatformIO Core 6.2.0, Espressif32 6.10.0 / Arduino 2.0.17 / Xtensa GCC 8.4.0, Espressif8266 4.2.1 / Arduino 3.1.2 / Xtensa GCC 10.3.0. ArduinoJson 6.21.5, PubSubClient 2.8.0, RTClib 2.1.4, Adafruit BusIO 1.16.1. Native Tests: Zig 0.13.0, C++17. Die Assertions waren aktiviert.
 
