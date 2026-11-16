@@ -1,0 +1,2964 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Feeder</title>
+<style>
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #ecf0f1;
+    --text-primary: #2c3e50;
+    --text-secondary: #7f8c8d;
+    --border-color: #e0e0e0;
+    --accent: #3498db;
+    --accent-hover: #2980b9;
+    --success: #2ecc71;
+    --warning: #f39c12;
+    --danger: #e74c3c;
+    --card-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --container-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  [data-theme="dark"] {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #3a3a3a;
+    --text-primary: #ecf0f1;
+    --text-secondary: #95a5a6;
+    --border-color: #4a4a4a;
+    --accent: #3498db;
+    --accent-hover: #2980b9;
+    --card-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    --container-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: var(--text-primary);
+    transition: background 0.3s;
+  }
+
+  [data-theme="dark"] body {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--bg-primary);
+    border-radius: 16px;
+    box-shadow: var(--container-shadow);
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .header h1 { font-size: 24px; font-weight: 600; }
+  
+  .header-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+  }
+
+  .status-bar {
+    display: flex;
+    gap: 15px;
+    font-size: 13px;
+  }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .dot-green { background: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
+  .dot-red { background: #e74c3c; box-shadow: 0 0 8px #e74c3c; }
+  .dot-yellow { background: #f39c12; box-shadow: 0 0 8px #f39c12; }
+  .dot-blue { background: #3498db; box-shadow: 0 0 8px #3498db; }
+
+  .icon-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+
+  .icon-btn:hover { background: rgba(255,255,255,0.3); }
+
+  .tabs {
+    display: flex;
+    background: var(--bg-tertiary);
+    border-bottom: 2px solid var(--border-color);
+    overflow-x: auto;
+  }
+
+  .tab {
+    padding: 15px 25px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    transition: all 0.2s;
+    border-bottom: 3px solid transparent;
+  }
+
+  .tab:hover { background: var(--border-color); color: var(--text-primary); }
+  
+  .tab.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--accent);
+    background: var(--bg-primary);
+  }
+
+  .content { padding: 30px; }
+  
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeIn 0.3s; }
+  
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  h2 { color: var(--text-primary); margin-bottom: 20px; font-size: 20px; }
+  h3 { color: var(--text-primary); margin: 20px 0 10px; font-size: 16px; }
+
+  .card {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-left: 4px solid var(--accent);
+    transition: background 0.3s;
+  }
+
+  .card.warning { border-left-color: var(--warning); }
+  .card.danger { border-left-color: var(--danger); }
+  .card.success { border-left-color: var(--success); }
+  .card.mqtt { border-left-color: #00bcd4; }
+  .card.device { border-left-color: #9b59b6; }
+  .card.update { border-left-color: #e67e22; }
+
+  .collapsible {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .collapsible::after {
+    content: '▼';
+    font-size: 12px;
+    transition: transform 0.3s;
+  }
+
+  .collapsible.collapsed::after {
+    transform: rotate(-90deg);
+  }
+
+  .collapsible-content {
+    max-height: 2000px;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    padding: 0;
+  }
+
+  .collapsible-content.collapsed {
+    max-height: 0;
+    padding: 0;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .dash-item {
+    background: var(--bg-secondary);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    text-align: center;
+    transition: background 0.3s;
+  }
+
+  .dash-item .label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
+  .dash-item .value { font-size: 28px; font-weight: bold; color: var(--text-primary); margin: 5px 0; }
+  .dash-item .sub { font-size: 12px; color: var(--text-secondary); }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
+  th { background: var(--text-primary); color: var(--bg-primary); font-weight: 500; font-size: 13px; }
+  tr:hover { background: var(--bg-secondary); }
+
+  input[type="time"], input[type="number"], input[type="text"], input[type="password"], select, textarea {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    width: 100%;
+    transition: border 0.2s;
+    font-family: inherit;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .switch input { opacity: 0; width: 0; height: 0; }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .3s;
+    border-radius: 24px;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+  }
+
+  input:checked + .slider { background-color: var(--accent); }
+  input:checked + .slider:before { transform: translateX(20px); }
+
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-success:hover { background: #27ae60; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover { background: #c0392b; }
+  .btn-big {
+    padding: 20px 40px;
+    font-size: 18px;
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  .event-row {
+    display: grid;
+    grid-template-columns: 2fr repeat(4, 60px);
+    gap: 10px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+  }
+
+  .event-row:hover { background: var(--bg-secondary); }
+  
+  .event-row.header {
+    background: var(--bg-tertiary);
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  .event-name { font-weight: 500; }
+  .event-desc { font-size: 12px; color: var(--text-secondary); }
+
+  .log-entry {
+    padding: 10px;
+    border-left: 3px solid var(--accent);
+    background: var(--bg-primary);
+    margin-bottom: 8px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .log-entry.error { border-left-color: var(--danger); }
+  .log-entry.warn { border-left-color: var(--warning); }
+  .log-entry.success { border-left-color: var(--success); }
+  .log-time { color: var(--text-secondary); font-size: 11px; }
+
+  .alert-banner {
+    padding: 15px 20px;
+    background: #fdedec;
+    border: 1px solid var(--danger);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  [data-theme="dark"] .alert-banner {
+    background: rgba(231, 76, 60, 0.2);
+  }
+
+  .alert-banner.hidden { display: none; }
+
+  .form-group { 
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .form-group label {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .form-group .hint { 
+    font-size: 12px; 
+    color: var(--text-secondary); 
+    margin-top: 3px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .badge-info { background: #d6eaf8; color: #2874a6; }
+  .badge-warn { background: #fef5e7; color: #b9770e; }
+  .badge-error { background: #fdedec; color: #c0392b; }
+  .badge-success { background: #d5f4e6; color: #27ae60; }
+  .badge-mqtt { background: #e0f7fa; color: #00838f; }
+  .badge-device { background: #f4ecf7; color: #7d3c98; }
+  .badge-update { background: #fdebd0; color: #d35400; }
+
+  [data-theme="dark"] .badge-info { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+  [data-theme="dark"] .badge-warn { background: rgba(243, 156, 18, 0.2); color: #f39c12; }
+  [data-theme="dark"] .badge-error { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+  [data-theme="dark"] .badge-success { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+  [data-theme="dark"] .badge-mqtt { background: rgba(0, 188, 212, 0.2); color: #00bcd4; }
+  [data-theme="dark"] .badge-device { background: rgba(155, 89, 182, 0.2); color: #9b59b6; }
+  [data-theme="dark"] .badge-update { background: rgba(230, 126, 34, 0.2); color: #e67e22; }
+
+  .input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+
+  .input-group input { padding-right: 40px; }
+
+  .input-group .toggle-btn {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text-secondary);
+    padding: 4px;
+    transition: color 0.2s;
+  }
+
+  .input-group .toggle-btn:hover { color: var(--accent); }
+
+  .login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+
+  [data-theme="dark"] .login-overlay {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  }
+
+  .login-overlay.hidden { display: none; }
+
+  .login-box {
+    background: var(--bg-primary);
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: var(--container-shadow);
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .login-box h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: var(--text-primary);
+  }
+
+  .login-error {
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 13px;
+    display: none;
+  }
+
+  .login-error.show { display: block; }
+
+  .file-input-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+  }
+
+  .file-input-wrapper input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  .file-input-label {
+    display: block;
+    padding: 12px 20px;
+    background: var(--bg-tertiary);
+    border: 2px dashed var(--border-color);
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+  }
+
+  .file-input-label:hover {
+    border-color: var(--accent);
+    background: var(--bg-secondary);
+  }
+
+  .backup-info {
+    background: var(--bg-tertiary);
+    padding: 15px;
+    border-radius: 6px;
+    margin-top: 15px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .backup-info strong {
+    color: var(--text-primary);
+  }
+
+  .calibration-box {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 15px 0;
+  }
+
+  .calibration-box h4 {
+    margin-bottom: 10px;
+  }
+
+  .calibration-steps {
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 6px;
+    margin-top: 10px;
+  }
+
+  .calibration-steps ol {
+    margin-left: 20px;
+  }
+
+  .calibration-steps li {
+    margin: 8px 0;
+    font-size: 13px;
+  }
+
+  .device-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+  }
+
+  .device-card {
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    padding: 15px;
+    transition: all 0.2s;
+  }
+
+  .device-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .device-card.master {
+    border-color: var(--success);
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.05) 0%, rgba(39, 174, 96, 0.05) 100%);
+  }
+
+  .device-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .device-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text-primary);
+  }
+
+  .device-role {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: white;
+  }
+
+  .device-role.master {
+    background: var(--success);
+  }
+
+  .device-info {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 5px 0;
+  }
+
+  .device-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .device-actions .btn {
+    flex: 1;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .update-box {
+    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 15px 0;
+  }
+
+  .update-box h4 {
+    margin-bottom: 10px;
+  }
+
+  .update-info {
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 6px;
+    margin-top: 10px;
+    font-size: 13px;
+  }
+
+  .update-info .version {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 5px;
+  }
+
+  .update-info .date {
+    opacity: 0.9;
+    font-size: 12px;
+  }
+
+  .mqtt-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    margin-bottom: 15px;
+  }
+
+  .mqtt-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .mqtt-topics-preview {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+    max-height: 250px;
+    overflow-y: auto;
+    margin-top: 10px;
+  }
+
+  .mqtt-topics-preview .topic-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px dotted var(--border-color);
+  }
+
+  .mqtt-topics-preview .topic-name {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .mqtt-topics-preview .topic-dir {
+    color: var(--text-secondary);
+    font-size: 10px;
+  }
+
+  .mqtt-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .mqtt-feature-item {
+    background: var(--bg-primary);
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .mqtt-feature-item .feature-info {
+    flex: 1;
+  }
+
+  .mqtt-feature-item .feature-name {
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+
+  .mqtt-feature-item .feature-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .ha-discovery-box {
+    background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+  }
+
+  .ha-discovery-box h4 {
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+
+  .ha-discovery-box p {
+    font-size: 12px;
+    opacity: 0.95;
+  }
+
+  .update-setting-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: var(--bg-primary);
+    border-radius: 6px;
+  }
+
+  .update-setting-item .setting-text {
+    flex: 1;
+  }
+
+  .update-setting-item .setting-title {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .update-setting-item .setting-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+    pointer-events: none;
+  }
+
+  .toast {
+    background: var(--bg-primary);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 15px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    animation: slideInRight 0.3s ease-out;
+    pointer-events: auto;
+    min-width: 300px;
+    max-width: 100%;
+  }
+
+  .toast.hiding {
+    animation: slideOutRight 0.3s ease-out forwards;
+  }
+
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+
+  .toast-icon { font-size: 20px; flex-shrink: 0; }
+  .toast-content { flex: 1; }
+  .toast-title { font-weight: 600; font-size: 14px; color: var(--text-primary); margin-bottom: 4px; }
+  .toast-message { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
+
+  .toast-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toast-close:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+
+  .toast.success { border-left-color: var(--success); }
+  .toast.success .toast-icon { color: var(--success); }
+  .toast.error { border-left-color: var(--danger); }
+  .toast.error .toast-icon { color: var(--danger); }
+  .toast.warning { border-left-color: var(--warning); }
+  .toast.warning .toast-icon { color: var(--warning); }
+  .toast.info { border-left-color: var(--accent); }
+  .toast.info .toast-icon { color: var(--accent); }
+
+  [data-theme="dark"] .toast { background: var(--bg-secondary); }
+
+  /* Sensor Status Cards */
+  .sensor-status-card {
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s;
+  }
+
+  .sensor-status-card.warning {
+    border-color: var(--warning);
+    background: rgba(243, 156, 18, 0.05);
+  }
+
+  .sensor-status-card.alarm {
+    border-color: var(--danger);
+    background: rgba(231, 76, 60, 0.05);
+    animation: pulseAlarm 2s infinite;
+  }
+
+  @keyframes pulseAlarm {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+  }
+
+  .sensor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .sensor-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sensor-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin: 10px 0;
+  }
+
+  .sensor-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+  }
+
+  .sensor-bar-fill {
+    height: 100%;
+    background: var(--success);
+    transition: width 0.3s, background 0.3s;
+  }
+
+  .sensor-bar-fill.warning {
+    background: var(--warning);
+  }
+
+  .sensor-bar-fill.alarm {
+    background: var(--danger);
+  }
+
+  .sensor-led {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+  }
+
+  .sensor-led.ok {
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+  }
+
+  .sensor-led.warning {
+    background: var(--warning);
+    box-shadow: 0 0 8px var(--warning);
+  }
+
+  .sensor-led.alarm {
+    background: var(--danger);
+    box-shadow: 0 0 8px var(--danger);
+    animation: blinkLed 1s infinite;
+  }
+
+  @keyframes blinkLed {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .sensor-config {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .rotation-counter {
+    font-family: 'Courier New', monospace;
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--accent);
+    text-align: center;
+    margin: 15px 0;
+  }
+
+  .setting-text {
+    flex: 1;
+  }
+
+  .setting-title {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .setting-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  @media (max-width: 600px) {
+    .event-row { grid-template-columns: 1fr; }
+    .header { flex-direction: column; gap: 10px; }
+    .update-setting-item { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loginOverlay" class="login-overlay">
+  <div class="login-box">
+    <h2 data-i18n="login_title">Smart Feeder Login</h2>
+    <div id="loginError" class="login-error" data-i18n="login_error">Falsches Passwort oder TOTP-Code!</div>
+    <div class="form-group">
+      <label data-i18n="login_password">Passwort</label>
+      <div class="input-group">
+        <input type="password" id="loginPassword" placeholder="Passwort eingeben">
+        <button class="toggle-btn" onclick="togglePassword('loginPassword', this)">👁️</button>
+      </div>
+    </div>
+    <div class="form-group" id="totpGroup">
+      <label data-i18n="login_totp">TOTP-Code (6 Ziffern)</label>
+      <input type="text" id="loginTOTP" placeholder="000000" maxlength="6" pattern="[0-9]*">
+      <div class="hint" data-i18n="login_totp_hint">Aus deiner Authenticator-App</div>
+    </div>
+    <div class="form-group">
+      <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+        <input type="checkbox" id="rememberMe" checked style="width: auto;">
+        <span data-i18n="login_remember">Angemeldet bleiben (30 Tage)</span>
+      </label>
+    </div>
+    <button class="btn btn-primary btn-big" onclick="doLogin()" data-i18n="login_button"> Anmelden</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div>
+      <h1 data-i18n="header_title">Smart Feeder</h1>
+      <div style="font-size: 12px; opacity: 0.8;">v1.0</div>
+    </div>
+    <div class="header-controls">
+      <div class="status-bar">
+        <div class="status-item"><span class="status-dot dot-green"></span> <span data-i18n="status_wifi">WLAN</span></div>
+        <div class="status-item"><span class="status-dot dot-green"></span> RTC</div>
+        <div class="status-item"><span class="status-dot dot-blue"></span> <span data-i18n="status_battery">Akku</span> 87%</div>
+        <div class="status-item"><span class="status-dot dot-green"></span> <span data-i18n="status_power">Netz</span></div>
+        <div class="status-item"><span class="status-dot dot-green"></span> MQTT</div>
+      </div>
+      <button class="icon-btn" onclick="toggleLanguage()" id="langBtn">EN</button>
+      <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+      <button class="icon-btn" onclick="doLogout()" data-i18n="logout_button">🚪 Abmelden</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('dashboard', this)" data-i18n="tab_dashboard">📊 Dashboard</button>
+    <button class="tab" onclick="showTab('schedule', this)" data-i18n="tab_schedule"> Futterzeiten</button>
+    <button class="tab" onclick="showTab('devices', this)" data-i18n="tab_devices">🔗 Geräte</button>
+    <button class="tab" onclick="showTab('logging', this)" data-i18n="tab_logging">📝 Logging</button>
+    <button class="tab" onclick="showTab('notifications', this)" data-i18n="tab_notifications">🔔 Benachrichtigungen</button>
+    <button class="tab" onclick="showTab('settings', this)" data-i18n="tab_settings">⚙️ Einstellungen</button>
+  </div>
+
+  <div class="content">
+
+    <div id="dashboard" class="tab-content active">
+      <div id="jamAlert" class="alert-banner">
+        <div>
+          <strong data-i18n="jam_title">⚠️ Klemmschutz aktiv!</strong><br>
+          <span style="font-size: 13px;" data-i18n="jam_desc">Motor blockiert seit 14:32. Drücke den manuellen Futterknopf, um zurückzusetzen.</span>
+        </div>
+        <button class="btn btn-danger" onclick="simulateResetJam()" data-i18n="jam_button">Manuell füttern</button>
+      </div>
+      <h2 data-i18n="dashboard_overview">Übersicht</h2>
+      <div class="dashboard-grid">
+        <div class="dash-item">
+          <div class="label" data-i18n="dash_time">Aktuelle Zeit</div>
+          <div class="value" id="currentTime">--:--</div>
+          <div class="sub">via DS3231 RTC</div>
+        </div>
+        <div class="dash-item">
+          <div class="label" data-i18n="dash_next">Nächste Fütterung</div>
+          <div class="value" id="nextFeed">18:00</div>
+          <div class="sub" data-i18n="dash_next_sub">in 2h 15min</div>
+        </div>
+        <div class="dash-item">
+          <div class="label" data-i18n="dash_battery">Akku</div>
+          <div class="value">87%</div>
+          <div class="sub" data-i18n="dash_battery_sub">~8 Monate Reserve</div>
+        </div>
+        <div class="dash-item">
+          <div class="label" data-i18n="dash_fed_today">Heute gefüttert</div>
+          <div class="value">3/8</div>
+          <div class="sub" data-i18n="dash_fed_today_sub">letzte: 12:00 ✓</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="manual_feed_title"> Manuelle Fütterung</h3>
+        <p style="margin-bottom: 15px; color: var(--text-secondary); font-size: 13px;" data-i18n="manual_feed_desc">Löst sofort eine Fütterung aus (Standard-Menge: 3 Sekunden). Setzt auch den Klemmschutz zurück, wenn erfolgreich.</p>
+        <button class="btn btn-success btn-big" onclick="manualFeed()" data-i18n="manual_feed_button">🍽️ Jetzt füttern (3s)</button>
+      </div>
+
+      <!-- Sensor Status Cards -->
+      <div id="sensorCards" style="display: none;">
+        <h3 style="margin-bottom: 15px;">📡 Sensor-Status</h3>
+        <div id="lightBarrierCard" class="sensor-status-card" style="display: none;">
+          <div class="sensor-header">
+            <div class="sensor-title">
+              <span class="sensor-led ok" id="lightBarrierLed"></span>
+              <span data-i18n="sensor_light_barrier">Lichtschranke (Futterstand)</span>
+            </div>
+            <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="resetLightBarrier()" data-i18n="sensor_reset">Reset</button>
+          </div>
+          <div class="sensor-value" id="lightBarrierValue">85%</div>
+          <div class="sensor-bar">
+            <div class="sensor-bar-fill" id="lightBarrierBar" style="width: 85%;"></div>
+          </div>
+          <div style="font-size: 12px; color: var(--text-secondary);" id="lightBarrierStatus">Futterstand: Gut</div>
+        </div>
+        <div id="endSwitchCard" class="sensor-status-card" style="display: none;">
+          <div class="sensor-header">
+            <div class="sensor-title">
+              <span class="sensor-led ok" id="endSwitchLed"></span>
+              <span data-i18n="sensor_end_switch">Endschalter (Umdrehungen)</span>
+            </div>
+            <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="resetEndSwitch()" data-i18n="sensor_reset_counter">Zähler reset</button>
+          </div>
+          <div class="rotation-counter" id="endSwitchValue">0</div>
+          <div style="font-size: 12px; color: var(--text-secondary); text-align: center;" id="endSwitchStatus">Umdrehungen seit letzter Fütterung</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="recent_events">📋 Letzte Events</h3>
+        <div id="recentEvents"></div>
+      </div>
+    </div>
+
+    <div id="schedule" class="tab-content">
+      <h2 data-i18n="schedule_title">Futterzeiten planen</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;" data-i18n="schedule_desc">Konfiguriere bis zu 8 tägliche Futterzeiten. Die RTC hält die Zeiten auch bei Stromausfall ein.</p>
+      <table id="scheduleTable">
+        <thead>
+          <tr>
+            <th data-i18n="schedule_active">Aktiv</th>
+            <th data-i18n="schedule_time">Uhrzeit</th>
+            <th data-i18n="schedule_duration">Dauer (Sek.)</th>
+            <th data-i18n="schedule_amount">Menge (ca. g)</th>
+            <th data-i18n="schedule_last">Letzte Ausführung</th>
+          </tr>
+        </thead>
+        <tbody id="scheduleBody"></tbody>
+      </table>
+      <div style="margin-top: 20px; display: flex; gap: 10px;">
+        <button class="btn btn-primary" onclick="saveSchedule()" data-i18n="save_button">💾 Speichern</button>
+        <button class="btn" style="background: var(--text-secondary); color: white;" onclick="testFeeding()" data-i18n="test_feed_button">🧪 Test-Fütterung</button>
+      </div>
+    </div>
+
+    <div id="devices" class="tab-content">
+      <h2 data-i18n="devices_title">Geräte-Verwaltung</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;" data-i18n="devices_desc">Kopple mehrere Smart Feeder miteinander und synchronisiere Futterzeiten oder steuere sie zentral.</p>
+      <div class="card device">
+        <h3 data-i18n="devices_local">📍 Dieses Gerät</h3>
+        <div class="device-card master">
+          <div class="device-header">
+            <div class="device-name">Wohnzimmer</div>
+            <div class="device-role master" data-i18n="devices_role_master">Master</div>
+          </div>
+          <div class="device-info">IP: 192.168.1.100</div>
+          <div class="device-info">Firmware: v1.0.3</div>
+          <div class="device-info" data-i18n="devices_uptime">Laufzeit: 14 Tage 6 Stunden</div>
+        </div>
+      </div>
+      <div class="card device">
+        <h3 data-i18n="devices_connected"> Verbundene Geräte</h3>
+        <div class="device-grid">
+          <div class="device-card">
+            <div class="device-header">
+              <div class="device-name">Schlafzimmer</div>
+              <div class="device-role" data-i18n="devices_role_slave">Slave</div>
+            </div>
+            <div class="device-info">IP: 192.168.1.101</div>
+            <div class="device-info">Sync: <span class="badge badge-info" data-i18n="devices_sync_async">Asynchron</span></div>
+            <div class="device-info">Letzter Sync: vor 2 Min.</div>
+            <div class="device-actions">
+              <button class="btn btn-primary" onclick="showToast('success', 'Sync', 'Sync erfolgreich!')" data-i18n="devices_sync_now">Jetzt syncen</button>
+              <button class="btn btn-danger" onclick="if(confirm('Gerät wirklich trennen?')) showToast('info', 'Getrennt', 'Gerät wurde getrennt.')" data-i18n="devices_disconnect">Trennen</button>
+            </div>
+          </div>
+          <div class="device-card">
+            <div class="device-header">
+              <div class="device-name">Küche</div>
+              <div class="device-role" data-i18n="devices_role_slave">Slave</div>
+            </div>
+            <div class="device-info">IP: 192.168.1.102</div>
+            <div class="device-info">Sync: <span class="badge badge-success" data-i18n="devices_sync_sync">Synchron</span></div>
+            <div class="device-info">Letzter Sync: vor 30 Sek.</div>
+            <div class="device-actions">
+              <button class="btn btn-primary" onclick="showToast('success', 'Sync', 'Sync erfolgreich!')" data-i18n="devices_sync_now">Jetzt syncen</button>
+              <button class="btn btn-danger" onclick="if(confirm('Gerät wirklich trennen?')) showToast('info', 'Getrennt', 'Gerät wurde getrennt.')" data-i18n="devices_disconnect">Trennen</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-success" style="margin-top: 15px; width: 100%;" onclick="addDevice()" data-i18n="devices_add">➕ Neues Gerät koppeln</button>
+      </div>
+      <div class="card device">
+        <h3 data-i18n="devices_sync_mode">🔄 Synchronisations-Modus</h3>
+        <div class="form-group">
+          <label data-i18n="devices_sync_type">Sync-Typ</label>
+          <select id="syncType">
+            <option value="async" data-i18n="devices_sync_async_full">Asynchron - Jedes Gerät füttert unabhängig</option>
+            <option value="sync" data-i18n="devices_sync_sync_full">Synchron - Alle Geräte füttern gleichzeitig</option>
+            <option value="master" data-i18n="devices_sync_master_full">Master-Slave - Master steuert alle Slaves</option>
+          </select>
+          <div class="hint" data-i18n="devices_sync_hint">Wähle, wie die verbundenen Geräte synchronisiert werden sollen.</div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="devices_sync_interval">Sync-Intervall (Sekunden):</label>
+          <input type="number" id="syncInterval" value="60" min="10" max="3600">
+          <div class="hint" data-i18n="devices_sync_interval_hint">Wie oft die Geräte ihre Konfigurationen abgleichen.</div>
+        </div>
+        <button class="btn btn-primary" onclick="saveSyncSettings()" data-i18n="save_button">💾 Speichern</button>
+      </div>
+    </div>
+
+    <div id="logging" class="tab-content">
+      <h2 data-i18n="logging_title">Event-Logging</h2>
+      <div class="card">
+        <h3 data-i18n="log_retention_title">📅 Aufbewahrungsdauer</h3>
+        <div class="form-group">
+          <label data-i18n="log_retention_label">Logs überschreiben nach (Tagen):</label>
+          <input type="number" id="logRetention" value="7" min="1" max="365">
+          <div class="hint" data-i18n="log_retention_hint">Ältere Einträge werden automatisch gelöscht. Maximal 500 Einträge im Speicher.</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="log_events_title">🎯 Welche Events loggen?</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;" data-i18n="log_events_desc">Wähle, welche Ereignisse im Log gespeichert werden sollen.</p>
+        <div id="eventLogConfig"></div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="log_viewer_title">📜 Log-Viewer</h3>
+        <div style="margin-bottom: 10px; display: flex; gap: 10px;">
+          <select id="logFilter" onchange="renderLogs()" style="width: auto;">
+            <option value="all" data-i18n="log_filter_all">Alle Events</option>
+            <option value="feeding" data-i18n="log_filter_feeding">Nur Fütterungen</option>
+            <option value="error" data-i18n="log_filter_error">Nur Fehler</option>
+            <option value="system" data-i18n="log_filter_system">Nur System</option>
+          </select>
+          <button class="btn btn-danger" style="margin-left: auto;" onclick="clearLogs()" data-i18n="log_clear_button">🗑️ Logs löschen</button>
+        </div>
+        <div id="logViewer"></div>
+      </div>
+    </div>
+
+    <div id="notifications" class="tab-content">
+      <h2 data-i18n="notify_title">Push-Benachrichtigungen</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;" data-i18n="notify_desc">Konfiguriere, bei welchen Events du benachrichtigt werden möchtest und über welchen Kanal.</p>
+      <div class="card">
+        <h3 data-i18n="notify_channels_title">📡 Kanäle konfigurieren</h3>
+        <div class="form-group">
+          <label data-i18n="notify_discord">🟣 Discord Webhook URL</label>
+          <div class="input-group">
+            <input type="password" id="discordUrl" placeholder="https://discord.com/api/webhooks/...">
+            <button class="toggle-btn" onclick="togglePassword('discordUrl', this)">👁️</button>
+          </div>
+          <div class="hint" data-i18n="notify_discord_hint">Erstelle einen Webhook in deinen Discord-Server-Einstellungen.</div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="notify_pushover">🔔 Pushover Token & User</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="input-group">
+              <input type="password" id="pushoverToken" placeholder="App Token">
+              <button class="toggle-btn" onclick="togglePassword('pushoverToken', this)">️</button>
+            </div>
+            <div class="input-group">
+              <input type="password" id="pushoverUser" placeholder="User Key">
+              <button class="toggle-btn" onclick="togglePassword('pushoverUser', this)">️</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="notify_telegram">✈️ Telegram Bot Token & Chat ID</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="input-group">
+              <input type="password" id="telegramToken" placeholder="Bot Token">
+              <button class="toggle-btn" onclick="togglePassword('telegramToken', this)">️</button>
+            </div>
+            <div class="input-group">
+              <input type="password" id="telegramChat" placeholder="Chat ID">
+              <button class="toggle-btn" onclick="togglePassword('telegramChat', this)">👁️</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="notify_email">📧 E-Mail (via SMTP)</label>
+          <div class="input-group">
+            <input type="text" id="emailAddr" placeholder="katze@beispiel.de">
+          </div>
+          <div class="hint" data-i18n="notify_email_hint">SMTP-Server wird in den Einstellungen konfiguriert.</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="notify_events_title">🎯 Events pro Kanal</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;" data-i18n="notify_events_desc">Wähle für jedes Event, über welche Kanäle du benachrichtigt werden möchtest.</p>
+        <div id="eventNotifyConfig"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveNotifications()" data-i18n="save_button"> Einstellungen speichern</button>
+      <button class="btn" style="background: var(--text-secondary); color: white;" onclick="testNotification()" data-i18n="notify_test_button">🧪 Test-Nachricht senden</button>
+    </div>
+
+    <div id="settings" class="tab-content">
+      <h2 data-i18n="settings_title">Einstellungen</h2>
+
+      <div class="card">
+        <h3 class="collapsible collapsed" onclick="toggleCollapsible(this)" data-i18n="settings_calibration">🎯 Motor-Kalibrierung</h3>
+        <div class="collapsible-content collapsed">
+          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;" data-i18n="calibration_desc">Kalibriere, wie lange der Motor drehen muss, um genau eine Portion Futter auszugeben.</p>
+          <div class="calibration-box">
+            <h4 data-i18n="calibration_wizard"> Kalibrierungs-Assistent</h4>
+            <div class="calibration-steps">
+              <ol>
+                <li data-i18n="calibration_step1">Stelle eine leere Schüssel unter den Automaten</li>
+                <li data-i18n="calibration_step2">Klicke auf "Motor starten" und zähle, wie lange er läuft</li>
+                <li data-i18n="calibration_step3">Wiege das ausgegebene Futter</li>
+                <li data-i18n="calibration_step4">Gib die gemessene Zeit und das Gewicht ein</li>
+                <li data-i18n="calibration_step5">Das System berechnet automatisch die Zeit pro Gramm</li>
+              </ol>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+            <div class="form-group">
+              <label data-i18n="calibration_time">Motor-Laufzeit (Sekunden):</label>
+              <input type="number" id="calibTime" value="3.0" step="0.1" min="0.1" max="30">
+            </div>
+            <div class="form-group">
+              <label data-i18n="calibration_weight">Ausgegebenes Futter (Gramm):</label>
+              <input type="number" id="calibWeight" value="15" step="0.1" min="0.1" max="100">
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="calibration_result">Berechnete Zeit pro Gramm:</label>
+            <input type="text" id="calibResult" value="0.20 s/g" readonly style="background: var(--bg-tertiary); font-weight: 600; color: var(--accent);">
+            <div class="hint" data-i18n="calibration_result_hint">Dieser Wert wird für alle Futterzeiten verwendet.</div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" onclick="startCalibration()" data-i18n="calibration_start">🔄 Motor starten (Test)</button>
+            <button class="btn btn-success" onclick="saveCalibration()" data-i18n="calibration_save">💾 Kalibrierung speichern</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="collapsible collapsed" onclick="toggleCollapsible(this)" data-i18n="settings_motor_type">⚡ Motor-Typ & Ansteuerung</h3>
+        <div class="collapsible-content collapsed">
+          <div class="form-group">
+            <label data-i18n="motor_type">Motor-Typ</label>
+            <select id="motorType" onchange="updateMotorConfig()">
+              <option value="dc" data-i18n="motor_dc">DC-Motor (Gleichstrom)</option>
+              <option value="servo" data-i18n="motor_servo">Servo-Motor</option>
+              <option value="stepper" data-i18n="motor_stepper">Schrittmotor</option>
+              <option value="custom" data-i18n="motor_custom">Benutzerdefiniert</option>
+            </select>
+            <div class="hint" data-i18n="motor_type_hint">Wähle den Motor-Typ, den du in deinem Automaten verbaut hast.</div>
+          </div>
+          <div id="motorConfig_dc">
+            <div class="form-group">
+              <label data-i18n="motor_voltage">Betriebsspannung (V):</label>
+              <input type="number" id="motorVoltage" value="5" step="0.1" min="1" max="24">
+            </div>
+            <div class="form-group">
+              <label data-i18n="motor_current">Maximaler Strom (mA):</label>
+              <input type="number" id="motorCurrent" value="500" min="100" max="5000">
+              <div class="hint" data-i18n="motor_current_hint">Wird für den Klemmschutz verwendet.</div>
+            </div>
+            <div class="form-group">
+              <label data-i18n="motor_driver">Motor-Treiber:</label>
+              <select id="motorDriver">
+                <option value="mosfet" data-i18n="motor_mosfet">MOSFET (IRLZ44N / IRLB8721)</option>
+                <option value="l298n" data-i18n="motor_l298n">L298N H-Bridge</option>
+                <option value="l293d" data-i18n="motor_l293d">L293D H-Bridge</option>
+                <option value="relay" data-i18n="motor_relay">Relais</option>
+              </select>
+            </div>
+          </div>
+          <div id="motorConfig_servo" style="display: none;">
+            <div class="form-group">
+              <label data-i18n="servo_angle">Drehwinkel pro Portion (Grad):</label>
+              <input type="number" id="servoAngle" value="90" min="1" max="180">
+            </div>
+            <div class="form-group">
+              <label data-i18n="servo_speed">Geschwindigkeit (ms pro 60°):</label>
+              <input type="number" id="servoSpeed" value="200" min="50" max="1000">
+            </div>
+          </div>
+          <div id="motorConfig_stepper" style="display: none;">
+            <div class="form-group">
+              <label data-i18n="stepper_steps">Schritte pro Portion:</label>
+              <input type="number" id="stepperSteps" value="200" min="1" max="10000">
+            </div>
+            <div class="form-group">
+              <label data-i18n="stepper_speed">Geschwindigkeit (RPM):</label>
+              <input type="number" id="stepperSpeed" value="60" min="1" max="300">
+            </div>
+            <div class="form-group">
+              <label data-i18n="stepper_driver">Treiber:</label>
+              <select id="stepperDriver">
+                <option value="a4988">A4988</option>
+                <option value="drv8825">DRV8825</option>
+                <option value="uln2003">ULN2003</option>
+              </select>
+            </div>
+          </div>
+          <div id="motorConfig_custom" style="display: none;">
+            <div class="form-group">
+              <label data-i18n="custom_config">Benutzerdefinierte Konfiguration:</label>
+              <textarea id="customMotorConfig" rows="5" placeholder="JSON-Konfiguration für benutzerdefinierten Motor..."></textarea>
+              <div class="hint" data-i18n="custom_config_hint">Erweiterte Konfiguration für spezielle Motoren.</div>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="saveMotorConfig()" data-i18n="save_button">💾 Speichern</button>
+        </div>
+      </div>
+
+      <div class="card update">
+        <h3 class="collapsible collapsed" onclick="toggleCollapsible(this)" data-i18n="settings_updates">🔄 Firmware-Updates</h3>
+        <div class="collapsible-content collapsed">
+          <div class="update-box">
+            <h4 data-i18n="update_current_version"> Aktuelle Version</h4>
+            <div class="update-info">
+              <div class="version">v1.0.3</div>
+              <div class="date" data-i18n="update_installed_date">Installiert am: 05.08.2026</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="update_source">Update-Quelle</label>
+            <select id="updateSource" onchange="updateSourceChanged()">
+              <option value="github" data-i18n="update_github">GitHub</option>
+              <option value="codeberg" data-i18n="update_codeberg">Codeberg</option>
+              <option value="custom" data-i18n="update_custom">Benutzerdefinierte URL</option>
+            </select>
+            <div class="hint" data-i18n="update_source_hint">Wähle die Plattform für Firmware-Updates.</div>
+          </div>
+          <div class="form-group" id="customRepoGroup" style="display: none;">
+            <label data-i18n="update_repo">Repository URL</label>
+            <input type="text" id="customRepoUrl" placeholder="https://github.com/username/repo">
+            <div class="hint" data-i18n="update_custom_hint">Gib die vollständige URL zum Repository ein.</div>
+          </div>
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 500;">
+              <label class="switch">
+                <input type="checkbox" id="autoUpdateCheck" checked onchange="toggleAutoUpdateConfig()">
+                <span class="slider"></span>
+              </label>
+              <div class="setting-text">
+                <span class="setting-title" data-i18n="update_auto_check">Automatisch nach Updates suchen</span>
+              </div>
+            </label>
+          </div>
+          <div id="autoUpdateConfig">
+            <div class="form-group">
+              <label data-i18n="update_check_interval">Such-Intervall (Stunden):</label>
+              <input type="number" id="updateInterval" value="24" min="1" max="168">
+              <div class="hint" data-i18n="update_interval_hint">Wie oft automatisch nach neuen Versionen gesucht wird.</div>
+            </div>
+            <div class="form-group">
+              <label style="display: flex; align-items: center; gap: 10px; font-weight: 500;">
+                <label class="switch">
+                  <input type="checkbox" id="updateNotify" checked>
+                  <span class="slider"></span>
+                </label>
+                <div class="setting-text">
+                  <span class="setting-title" data-i18n="update_notify">Benachrichtigung bei verfügbarem Update</span>
+                  <span class="setting-desc" data-i18n="update_notify_hint">Sendet eine Push-Benachrichtigung, wenn eine neue Version verfügbar ist.</span>
+                </div>
+              </label>
+            </div>
+            <div class="form-group">
+              <label style="display: flex; align-items: center; gap: 10px; font-weight: 500;">
+                <label class="switch">
+                  <input type="checkbox" id="autoInstall">
+                  <span class="slider"></span>
+                </label>
+                <div class="setting-text">
+                  <span class="setting-title" data-i18n="update_auto_install">Updates automatisch installieren</span>
+                  <span class="setting-desc" data-i18n="update_auto_install_hint">⚠️ Risiko: Automatische Installation kann zu Problemen führen. Nur für stabile Releases empfohlen.</span>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button class="btn btn-primary" onclick="checkForUpdates()" data-i18n="update_check_now">🔍 Jetzt nach Updates suchen</button>
+            <button class="btn btn-success" onclick="saveUpdateSettings()" data-i18n="save_button"> Speichern</button>
+          </div>
+          <div id="updateResult" style="margin-top: 15px; display: none;">
+            <div class="card success">
+              <h4 data-i18n="update_available">✅ Update verfügbar!</h4>
+              <p style="font-size: 13px; margin: 10px 0;">
+                <strong>Neue Version:</strong> v1.1.0<br>
+                <strong>Veröffentlicht:</strong> 08.08.2026<br>
+                <strong>Änderungen:</strong>
+              </p>
+              <ul style="font-size: 12px; margin-left: 20px; color: var(--text-secondary);">
+                <li>Neue Motor-Typen unterstützt</li>
+                <li>Verbesserte MQTT-Integration</li>
+                <li>Bugfixes und Stabilitätsverbesserungen</li>
+              </ul>
+              <button class="btn btn-success" style="margin-top: 10px;" onclick="installUpdate()" data-i18n="update_install">📥 Update installieren</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="collapsible collapsed" onclick="toggleCollapsible(this)" data-i18n="settings_backup">💾 Backup & Wiederherstellung</h3>
+        <div class="collapsible-content collapsed">
+          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;" data-i18n="backup_desc">Exportiere alle Einstellungen als JSON-Datei oder importiere ein Backup.</p>
+          <div class="form-group">
+            <label data-i18n="backup_export">Export</label>
+            <button class="btn btn-success" style="width: 100%;" onclick="exportSettings()" data-i18n="backup_export_button">📥 Alle Einstellungen exportieren</button>
+            <div class="hint" data-i18n="backup_export_hint">Erstellt eine JSON-Datei mit allen Konfigurationen (inkl. Passwörter und Tokens).</div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="backup_import">Import</label>
+            <div class="file-input-wrapper">
+              <div class="file-input-label" data-i18n="backup_import_label">📤 Backup-Datei auswählen (.json)</div>
+              <input type="file" id="importFile" accept=".json" onchange="importSettings(event)">
+            </div>
+            <div class="hint" data-i18n="backup_import_hint">Alle aktuellen Einstellungen werden überschrieben!</div>
+          </div>
+          <div class="backup-info">
+            <strong data-i18n="backup_info_title">Was wird gesichert?</strong><br>
+            <span data-i18n="backup_info_content">✓ Futterzeiten & Mengen<br>✓ Logging-Konfiguration<br>✓ Benachrichtigungs-Einstellungen<br>✓ MQTT/ESPHome-Integration<br>✓ Motor-Kalibrierung & Typ<br>✓ Geräte-Kopplungen<br>✓ Update-Einstellungen<br>✓ Sensor-Konfigurationen<br>✓ WLAN-Zugangsdaten<br>✓ SMTP-Server-Konfiguration<br>✓ Login-Passwort & TOTP-Secret<br>✓ Theme & Sprache<br>✗ Event-Logs (werden nicht exportiert)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="collapsible collapsed" onclick="toggleCollapsible(this)" data-i18n="settings_wifi">📶 WLAN</h3>
+        <div class="collapsible-content collapsed">
+          <div class="form-group">
+            <label>SSID</label>
+            <input type="text" value="MeinWLAN">
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings_wifi_password">Passwort</label>
+            <div class="input-group">
+              <input type="password" id="wifiPassword" value="meinWLANPasswort">
+              <button class="toggle-btn" onclick="togglePassword('wifiPassword', this)">👁️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Hostname</label>
+            <input type="text" value="smart-feeder">
+          </div>
+        </div>
+      </div>
+
+      <div class="card mqtt">
+        <h3 class="collapsible collapsed" onclick="toggleCollapsible(this)" data-i18n="settings_mqtt"> MQTT / ESPHome Integration</h3>
+        <div class="collapsible-content collapsed">
+          <div class="mqtt-status-bar">
+            <div class="mqtt-status-indicator">
+              <span class="status-dot dot-green"></span>
+              <span data-i18n="mqtt_status_connected">Verbunden</span>
+            </div>
+            <div style="margin-left: auto; font-size: 12px; color: var(--text-secondary);">
+              <span data-i18n="mqtt_uptime">Laufzeit</span>: 3d 14h 22m
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 500;">
+              <label class="switch">
+                <input type="checkbox" id="mqttEnabled" checked onchange="toggleMqttEnabled()">
+                <span class="slider"></span>
+              </label>
+              <div class="setting-text">
+                <span class="setting-title" data-i18n="mqtt_enable_label">MQTT-Integration aktivieren</span>
+                <span class="setting-desc" data-i18n="mqtt_enable_hint">Ermöglicht die Steuerung und Überwachung über Home Assistant, ESPHome oder andere MQTT-Clients.</span>
+              </div>
+            </label>
+          </div>
+          <div id="mqttConfigSection">
+            <div class="form-group">
+              <label data-i18n="mqtt_server">MQTT-Server</label>
+              <input type="text" id="mqttServer" value="homeassistant.local" placeholder="192.168.1.100">
+              <div class="hint" data-i18n="mqtt_server_hint">Hostname oder IP-Adresse deines MQTT-Brokers.</div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label data-i18n="mqtt_port">Port</label>
+                <input type="number" id="mqttPort" value="1883" placeholder="1883">
+              </div>
+              <div class="form-group">
+                <label data-i18n="mqtt_prefix">Topic-Präfix</label>
+                <input type="text" id="mqttPrefix" value="smart-feeder" placeholder="smart-feeder">
+                <div class="hint" data-i18n="mqtt_prefix_hint">Basis-Pfad für alle MQTT-Topics</div>
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label data-i18n="mqtt_user">Benutzername</label>
+                <input type="text" id="mqttUser" placeholder="mqtt-user">
+              </div>
+              <div class="form-group">
+                <label data-i18n="mqtt_password">Passwort</label>
+                <div class="input-group">
+                  <input type="password" id="mqttPassword" placeholder="MQTT-Passwort">
+                  <button class="toggle-btn" onclick="togglePassword('mqttPassword', this)">️</button>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label style="display: flex; align-items: center; gap: 10px; font-weight: 500;">
+                <label class="switch">
+                  <input type="checkbox" id="mqttTls">
+                  <span class="slider"></span>
+                </label>
+                <div class="setting-text">
+                  <span class="setting-title" data-i18n="mqtt_tls">TLS/SSL-Verschlüsselung verwenden</span>
+                  <span class="setting-desc" data-i18n="mqtt_tls_hint">Empfohlen für MQTT-Server außerhalb des lokalen Netzwerks (Port 8883)</span>
+                </div>
+              </label>
+            </div>
+            <div class="ha-discovery-box">
+              <h4>🏡 Home Assistant MQTT Auto-Discovery</h4>
+              <p data-i18n="mqtt_ha_desc">Bei aktivierter Auto-Discovery erscheinen alle Entities automatisch in Home Assistant.</p>
+              <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+                <label class="switch">
+                  <input type="checkbox" id="haDiscovery" checked>
+                  <span class="slider"></span>
+                </label>
+                <span style="font-size: 13px;" data-i18n="mqtt_ha_enable">Auto-Discovery aktivieren</span>
+              </div>
+            </div>
+            <h4 style="margin-top: 20px; color: var(--text-primary);" data-i18n="mqtt_features_title"> Verfügbare Features über MQTT</h4>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 10px;" data-i18n="mqtt_features_desc">Wähle, welche Funktionen über MQTT verfügbar sein sollen.</p>
+            <div class="mqtt-feature-grid">
+              <div class="mqtt-feature-item">
+                <div class="feature-info">
+                  <div class="feature-name" data-i18n="mqtt_feat_status">Status-Daten</div>
+                  <div class="feature-desc" data-i18n="mqtt_feat_status_desc">Akku, WLAN, RTC, Netz</div>
+                </div>
+                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+              </div>
+              <div class="mqtt-feature-item">
+                <div class="feature-info">
+                  <div class="feature-name" data-i18n="mqtt_feat_control">Steuerung</div>
+                  <div class="feature-desc" data-i18n="mqtt_feat_control_desc">Manuelle Fütterung, Reset</div>
+                </div>
+                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+              </div>
+              <div class="mqtt-feature-item">
+                <div class="feature-info">
+                  <div class="feature-name" data-i18n="mqtt_feat_schedule">Futterzeiten</div>
+                  <div class="feature-desc" data-i18n="mqtt_feat_schedule_desc">Lesen & Schreiben der 8 Slots</div>
+                </div>
+                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+              </div>
+              <div class="mqtt-feature-item">
+                <div class="feature-info">
+                  <div class="feature-name" data-i18n="mqtt_feat_events">Events & Logs</div>
+                  <div class="feature-desc" data-i18n="mqtt_feat_events_desc">Letzte Events, Klemmschutz</div>
+                </div>
+                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+              </div>
+              <div class="mqtt-feature-item">
+                <div class="feature-info">
+                  <div class="feature-name" data-i18n="mqtt_feat_config">Konfiguration</div>
+                  <div class="feature-desc" data-i18n="mqtt_feat_config_desc">Motor-Schwellen, Zeitzone</div>
+                </div>
+                <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+              </div>
+              <div class="mqtt-feature-item">
+                <div class="feature-info">
+                  <div class="feature-name" data-i18n="mqtt_feat_ota">OTA-Updates</div>
+                  <div class="feature-desc" data-i18n="mqtt_feat_ota_desc">Firmware-Updates via MQTT</div>
+                </div>
+                <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+              </div>
+            </div>
+            <h4 style="margin-top: 20px; color: var(--text-primary);" data-i18n="mqtt_topics_title"> MQTT-Topic-Vorschau</h4>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 10px;" data-i18n="mqtt_topics_desc">Diese Topics werden basierend auf deiner Konfiguration verwendet:</p>
+            <div class="mqtt-topics-preview" id="mqttTopicsPreview"></div>
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+              <button class="btn btn-primary" onclick="saveMqttConfig()" data-i18n="save_button">💾 Speichern</button>
+              <button class="btn" style="background: var(--text-secondary); color: white;" onclick="testMqttConnection()" data-i18n="mqtt_test_button">🧪 Verbindung testen</button>
+              <button class="btn btn-success" onclick="publishHaDiscovery()" data-i18n="mqtt_discovery_button">🏡 HA Discovery senden</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="collapsible collapsed" onclick="toggleCollapsible(this)" data-i18n="settings_smtp">📧 SMTP-Server</h3>
+        <div class="collapsible-content collapsed">
+          <div class="form-group">
+            <label data-i18n="settings_smtp_server">SMTP-Server</label>
+            <input type="text" id="smtpServer" placeholder="smtp.gmail.com">
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings_smtp_port">SMTP-Port</label>
+            <input type="number" id="smtpPort" value="587" placeholder="587 (TLS) oder 465 (SSL)">
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings_smtp_user">Benutzername</label>
+            <input type="text" id="smtpUser" placeholder="deine.email@gmail.com">
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings_smtp_password">Passwort</label>
+            <div class="input-group">
+              <input type="password" id="smtpPassword" placeholder="SMTP-Passwort">
+              <button class="toggle-btn" onclick="togglePassword('smtpPassword', this)">👁️</button>
+            </div>
+            <div class="hint" data-i18n="settings_smtp_password_hint">Für Gmail: App-Passwort verwenden (2FA erforderlich)</div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings_smtp_encryption">Verschlüsselung</label>
+            <select id="smtpEncryption">
+              <option value="tls">TLS (Port 587)</option>
+              <option value="ssl">SSL (Port 465)</option>
+              <option value="none" data-i18n="settings_smtp_none">Keine (Port 25)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings_smtp_from">Absender-Adresse</label>
+            <input type="text" id="smtpFrom" placeholder="smart-feeder@gmail.com">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="collapsible collapsed" onclick="toggleCollapsible(this)" data-i18n="settings_security">🔐 Sicherheit & Login</h3>
+        <div class="collapsible-content collapsed">
+          <div class="form-group">
+            <label data-i18n="settings_new_password">Neues Login-Passwort</label>
+            <div class="input-group">
+              <input type="password" id="newPassword" placeholder="Neues Passwort">
+              <button class="toggle-btn" onclick="togglePassword('newPassword', this)">👁️</button>
+            </div>
+            <div class="hint" data-i18n="settings_new_password_hint">Wird als SHA256-Hash gespeichert (nicht im Klartext)</div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings_totp">TOTP aktivieren (2-Faktor-Authentifizierung)</label>
+            <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+              <input type="checkbox" id="enableTOTP" style="width: auto;">
+              <span data-i18n="settings_totp_checkbox">TOTP mit Authenticator-App verwenden</span>
+            </label>
+            <div class="hint" data-i18n="settings_totp_hint">Erfordert eine App wie Google Authenticator, Authy oder FreeOTP</div>
+          </div>
+          <div id="totpSetup" style="display: none; margin-top: 15px; padding: 15px; background: var(--bg-primary); border-radius: 6px;">
+            <p style="font-size: 13px; margin-bottom: 10px;" data-i18n="settings_totp_setup"><strong>Setup:</strong> Scanne den QR-Code mit deiner Authenticator-App oder gib den Secret manuell ein.</p>
+            <div style="text-align: center; margin: 15px 0;">
+              <div style="width: 200px; height: 200px; background: var(--bg-tertiary); display: inline-block; line-height: 200px; text-align: center; border-radius: 8px;">[QR-Code]</div>
+            </div>
+            <div class="form-group">
+              <label data-i18n="settings_totp_secret">Secret (manuell eingeben):</label>
+              <div class="input-group">
+                <input type="password" id="totpSecret" value="JBSWY3DPEHPK3PXP" readonly>
+                <button class="toggle-btn" onclick="togglePassword('totpSecret', this)">👁️</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label data-i18n="settings_totp_verify">Verifizierungs-Code (zum Testen):</label>
+              <input type="text" id="totpVerify" placeholder="6-stelliger Code" maxlength="6">
+            </div>
+            <button class="btn btn-success" onclick="verifyTOTP()" data-i18n="settings_totp_verify_button">✓ TOTP verifizieren & aktivieren</button>
+          </div>
+          <button class="btn btn-primary" style="margin-top: 10px;" onclick="saveSecurity()" data-i18n="save_button">💾 Sicherheitseinstellungen speichern</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="collapsible collapsed" onclick="toggleCollapsible(this)" data-i18n="settings_time"> Zeit & Fallback</h3>
+        <div class="collapsible-content collapsed">
+          <div class="form-group">
+            <label data-i18n="settings_timezone">Zeitzone</label>
+            <select id="timezoneSelect">
+              <option value="auto">🌐 Automatisch (Lokale Browser-Zeit)</option>
+            </select>
+            <div class="hint">Die IANA-Zeitzonen werden per JavaScript geladen.</div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings_deepsleep">DeepSleep-Intervall (Minuten):</label>
+            <input type="number" value="1" min="1" max="60">
+            <div class="hint" data-i18n="settings_deepsleep_hint">Wie oft der ESP im Blackout-Modus aufwacht, um zu prüfen, ob gefüttert werden muss.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="collapsible collapsed" onclick="toggleCollapsible(this)" data-i18n="settings_motor">⚡ Motor & Klemmschutz</h3>
+        <div class="collapsible-content collapsed">
+          <div class="form-group">
+            <label data-i18n="settings_jam_threshold">Klemm-Stromschwelle (mA):</label>
+            <input type="number" value="800">
+            <div class="hint" data-i18n="settings_jam_threshold_hint">Bei Überschreitung wird der Motor gestoppt und die Hardware-LED leuchtet.</div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings_jam_timeout">Klemm-Timeout (ms):</label>
+            <input type="number" value="500">
+            <div class="hint" data-i18n="settings_jam_timeout_hint">Wie lange der Strom über der Schwelle sein muss, bevor ausgelöst wird.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lichtschranke -->
+      <div class="card">
+        <h3 class="collapsible collapsed" onclick="toggleCollapsible(this)" data-i18n="settings_light_barrier">💡 Lichtschranke (Futterstand)</h3>
+        <div class="collapsible-content collapsed">
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 500;">
+              <label class="switch">
+                <input type="checkbox" id="lightBarrierEnabled" onchange="toggleLightBarrier()">
+                <span class="slider"></span>
+              </label>
+              <div class="setting-text">
+                <span class="setting-title" data-i18n="sensor_light_barrier_enable">Lichtschranke aktivieren</span>
+                <span class="setting-desc" data-i18n="sensor_light_barrier_desc">Misst den Futterstand im Behälter. Alarm wenn Futter knapp wird.</span>
+              </div>
+            </label>
+          </div>
+          <div id="lightBarrierConfig" style="display: none;">
+            <div class="form-group">
+              <label data-i18n="sensor_threshold">Alarm-Schwelle (%):</label>
+              <input type="number" id="lightBarrierThreshold" value="20" min="5" max="50">
+              <div class="hint" data-i18n="sensor_threshold_hint">Bei diesem Füllstand wird Alarm ausgelöst.</div>
+            </div>
+            <div class="form-group">
+              <label style="display: flex; align-items: center; gap: 10px; font-weight: 500;">
+                <label class="switch">
+                  <input type="checkbox" id="lightBarrierNotify" checked>
+                  <span class="slider"></span>
+                </label>
+                <div class="setting-text">
+                  <span class="setting-title" data-i18n="sensor_notify">Benachrichtigung bei Alarm</span>
+                </div>
+              </label>
+            </div>
+            <div class="form-group">
+              <label style="display: flex; align-items: center; gap: 10px; font-weight: 500;">
+                <label class="switch">
+                  <input type="checkbox" id="lightBarrierLedSwitch" checked>
+                  <span class="slider"></span>
+                </label>
+                <div class="setting-text">
+                  <span class="setting-title" data-i18n="sensor_led">Hardware-LED bei Alarm</span>
+                </div>
+              </label>
+            </div>
+            <button class="btn btn-primary" onclick="saveLightBarrierConfig()" data-i18n="save_button">💾 Speichern</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Endschalter -->
+      <div class="card">
+        <h3 class="collapsible collapsed" onclick="toggleCollapsible(this)" data-i18n="settings_end_switch">🔄 Endschalter (Umdrehungszähler)</h3>
+        <div class="collapsible-content collapsed">
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 500;">
+              <label class="switch">
+                <input type="checkbox" id="endSwitchEnabled" onchange="toggleEndSwitch()">
+                <span class="slider"></span>
+              </label>
+              <div class="setting-text">
+                <span class="setting-title" data-i18n="sensor_end_switch_enable">Endschalter aktivieren</span>
+                <span class="setting-desc" data-i18n="sensor_end_switch_desc">Misst die Umdrehungen des Motors für präzise Dosierung.</span>
+              </div>
+            </label>
+          </div>
+          <div id="endSwitchConfig" style="display: none;">
+            <div class="form-group">
+              <label data-i18n="sensor_rotations_per_portion">Umdrehungen pro Portion:</label>
+              <input type="number" id="rotationsPerPortion" value="10" min="1" max="100">
+              <div class="hint" data-i18n="sensor_rotations_hint">Wie viele Umdrehungen für eine Standard-Portion benötigt werden.</div>
+            </div>
+            <div class="form-group">
+              <label data-i18n="sensor_max_rotations">Max. Umdrehungen (Sicherheit):</label>
+              <input type="number" id="maxRotations" value="50" min="10" max="200">
+              <div class="hint" data-i18n="sensor_max_rotations_hint">Motor stoppt automatisch bei dieser Anzahl (Klemmschutz).</div>
+            </div>
+            <div class="form-group">
+              <label style="display: flex; align-items: center; gap: 10px; font-weight: 500;">
+                <label class="switch">
+                  <input type="checkbox" id="endSwitchNotify" checked>
+                  <span class="slider"></span>
+                </label>
+                <div class="setting-text">
+                  <span class="setting-title" data-i18n="sensor_notify_rotation">Benachrichtigung bei Anomalie</span>
+                </div>
+              </label>
+            </div>
+            <button class="btn btn-primary" onclick="saveEndSwitchConfig()" data-i18n="save_button">💾 Speichern</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="collapsible collapsed" onclick="toggleCollapsible(this)" data-i18n="settings_maintenance">🔧 Wartung</h3>
+        <div class="collapsible-content collapsed">
+          <button class="btn btn-primary" onclick="showToast('info', 'RTC', 'RTC wird synchronisiert...')" data-i18n="settings_sync_rtc">🕐 RTC synchronisieren</button>
+          <button class="btn" style="background: var(--text-secondary); color: white;" onclick="showToast('info', 'Neustart', 'ESP wird neu gestartet...')" data-i18n="settings_restart">🔄 ESP neu starten</button>
+          <button class="btn btn-danger" onclick="if(confirm('Wirklich alle Einstellungen löschen?')) showToast('warning', 'Werkseinstellungen', 'Alle Einstellungen wurden zurückgesetzt.')" data-i18n="settings_factory_reset">⚠️ Werkseinstellungen</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script>
+  function showToast(type, title, message, duration = 4000) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icons = { success: '✅', error: '', warning: '⚠️', info: 'ℹ️' };
+    toast.innerHTML = `
+      <div class="toast-icon">${icons[type] || icons.info}</div>
+      <div class="toast-content">
+        <div class="toast-title">${title}</div>
+        <div class="toast-message">${message || ''}</div>
+      </div>
+      <button class="toast-close" onclick="this.closest('.toast').remove()">×</button>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('hiding');
+      setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }, duration);
+  }
+
+  const translations = {
+    de: {
+      login_title: 'Smart Feeder Login',
+      login_error: 'Falsches Passwort oder TOTP-Code!',
+      login_password: 'Passwort',
+      login_totp: 'TOTP-Code (6 Ziffern)',
+      login_totp_hint: 'Aus deiner Authenticator-App',
+      login_remember: 'Angemeldet bleiben (30 Tage)',
+      login_button: '🔓 Anmelden',
+      logout_button: '🚪 Abmelden',
+      header_title: 'Smart Feeder',
+      status_wifi: 'WLAN',
+      status_battery: 'Akku',
+      status_power: 'Netz',
+      tab_dashboard: '📊 Dashboard',
+      tab_schedule: '⏰ Futterzeiten',
+      tab_devices: '🔗 Geräte',
+      tab_logging: '📝 Logging',
+      tab_notifications: ' Benachrichtigungen',
+      tab_settings: '⚙️ Einstellungen',
+      jam_title: '⚠️ Klemmschutz aktiv!',
+      jam_desc: 'Motor blockiert seit 14:32. Drücke den manuellen Futterknopf, um zurückzusetzen.',
+      jam_button: 'Manuell füttern',
+      dashboard_overview: 'Übersicht',
+      dash_time: 'Aktuelle Zeit',
+      dash_next: 'Nächste Fütterung',
+      dash_next_sub: 'in 2h 15min',
+      dash_battery: 'Akku',
+      dash_battery_sub: '~8 Monate Reserve',
+      dash_fed_today: 'Heute gefüttert',
+      dash_fed_today_sub: 'letzte: 12:00 ✓',
+      manual_feed_title: '🔘 Manuelle Fütterung',
+      manual_feed_desc: 'Löst sofort eine Fütterung aus (Standard-Menge: 3 Sekunden). Setzt auch den Klemmschutz zurück, wenn erfolgreich.',
+      manual_feed_button: '🍽️ Jetzt füttern (3s)',
+      recent_events: '📋 Letzte Events',
+      schedule_title: 'Futterzeiten planen',
+      schedule_desc: 'Konfiguriere bis zu 8 tägliche Futterzeiten. Die RTC hält die Zeiten auch bei Stromausfall ein.',
+      schedule_active: 'Aktiv',
+      schedule_time: 'Uhrzeit',
+      schedule_duration: 'Dauer (Sek.)',
+      schedule_amount: 'Menge (ca. g)',
+      schedule_last: 'Letzte Ausführung',
+      save_button: '💾 Speichern',
+      test_feed_button: '🧪 Test-Fütterung',
+      devices_title: 'Geräte-Verwaltung',
+      devices_desc: 'Kopple mehrere Smart Feeder miteinander und synchronisiere Futterzeiten oder steuere sie zentral.',
+      devices_local: '📍 Dieses Gerät',
+      devices_role_master: 'Master',
+      devices_uptime: 'Laufzeit: 14 Tage 6 Stunden',
+      devices_connected: '🔗 Verbundene Geräte',
+      devices_role_slave: 'Slave',
+      devices_sync_async: 'Asynchron',
+      devices_sync_sync: 'Synchron',
+      devices_sync_now: 'Jetzt syncen',
+      devices_disconnect: 'Trennen',
+      devices_add: ' Neues Gerät koppeln',
+      devices_sync_mode: '🔄 Synchronisations-Modus',
+      devices_sync_type: 'Sync-Typ',
+      devices_sync_async_full: 'Asynchron - Jedes Gerät füttert unabhängig',
+      devices_sync_sync_full: 'Synchron - Alle Geräte füttern gleichzeitig',
+      devices_sync_master_full: 'Master-Slave - Master steuert alle Slaves',
+      devices_sync_hint: 'Wähle, wie die verbundenen Geräte synchronisiert werden sollen.',
+      devices_sync_interval: 'Sync-Intervall (Sekunden):',
+      devices_sync_interval_hint: 'Wie oft die Geräte ihre Konfigurationen abgleichen.',
+      logging_title: 'Event-Logging',
+      log_retention_title: '📅 Aufbewahrungsdauer',
+      log_retention_label: 'Logs überschreiben nach (Tagen):',
+      log_retention_hint: 'Ältere Einträge werden automatisch gelöscht. Maximal 500 Einträge im Speicher.',
+      log_events_title: '🎯 Welche Events loggen?',
+      log_events_desc: 'Wähle, welche Ereignisse im Log gespeichert werden sollen.',
+      log_viewer_title: '📜 Log-Viewer',
+      log_filter_all: 'Alle Events',
+      log_filter_feeding: 'Nur Fütterungen',
+      log_filter_error: 'Nur Fehler',
+      log_filter_system: 'Nur System',
+      log_clear_button: '🗑️ Logs löschen',
+      notify_title: 'Push-Benachrichtigungen',
+      notify_desc: 'Konfiguriere, bei welchen Events du benachrichtigt werden möchtest und über welchen Kanal.',
+      notify_channels_title: ' Kanäle konfigurieren',
+      notify_discord: '🟣 Discord Webhook URL',
+      notify_discord_hint: 'Erstelle einen Webhook in deinen Discord-Server-Einstellungen.',
+      notify_pushover: '🔔 Pushover Token & User',
+      notify_telegram: '✈️ Telegram Bot Token & Chat ID',
+      notify_email: ' E-Mail (via SMTP)',
+      notify_email_hint: 'SMTP-Server wird in den Einstellungen konfiguriert.',
+      notify_events_title: ' Events pro Kanal',
+      notify_events_desc: 'Wähle für jedes Event, über welche Kanäle du benachrichtigt werden möchtest.',
+      notify_test_button: '🧪 Test-Nachricht senden',
+      settings_title: 'Einstellungen',
+      settings_calibration: '🎯 Motor-Kalibrierung',
+      calibration_desc: 'Kalibriere, wie lange der Motor drehen muss, um genau eine Portion Futter auszugeben.',
+      calibration_wizard: ' Kalibrierungs-Assistent',
+      calibration_step1: 'Stelle eine leere Schüssel unter den Automaten',
+      calibration_step2: 'Klicke auf "Motor starten" und zähle, wie lange er läuft',
+      calibration_step3: 'Wiege das ausgegebene Futter',
+      calibration_step4: 'Gib die gemessene Zeit und das Gewicht ein',
+      calibration_step5: 'Das System berechnet automatisch die Zeit pro Gramm',
+      calibration_time: 'Motor-Laufzeit (Sekunden):',
+      calibration_weight: 'Ausgegebenes Futter (Gramm):',
+      calibration_result: 'Berechnete Zeit pro Gramm:',
+      calibration_result_hint: 'Dieser Wert wird für alle Futterzeiten verwendet.',
+      calibration_start: '🔄 Motor starten (Test)',
+      calibration_save: '💾 Kalibrierung speichern',
+      settings_motor_type: '⚡ Motor-Typ & Ansteuerung',
+      motor_type: 'Motor-Typ',
+      motor_dc: 'DC-Motor (Gleichstrom)',
+      motor_servo: 'Servo-Motor',
+      motor_stepper: 'Schrittmotor',
+      motor_custom: 'Benutzerdefiniert',
+      motor_type_hint: 'Wähle den Motor-Typ, den du in deinem Automaten verbaut hast.',
+      motor_voltage: 'Betriebsspannung (V):',
+      motor_current: 'Maximaler Strom (mA):',
+      motor_current_hint: 'Wird für den Klemmschutz verwendet.',
+      motor_driver: 'Motor-Treiber:',
+      motor_mosfet: 'MOSFET (IRLZ44N / IRLB8721)',
+      motor_l298n: 'L298N H-Bridge',
+      motor_l293d: 'L293D H-Bridge',
+      motor_relay: 'Relais',
+      servo_angle: 'Drehwinkel pro Portion (Grad):',
+      servo_speed: 'Geschwindigkeit (ms pro 60°):',
+      stepper_steps: 'Schritte pro Portion:',
+      stepper_speed: 'Geschwindigkeit (RPM):',
+      stepper_driver: 'Treiber:',
+      custom_config: 'Benutzerdefinierte Konfiguration:',
+      custom_config_hint: 'Erweiterte Konfiguration für spezielle Motoren.',
+      settings_updates: '🔄 Firmware-Updates',
+      update_current_version: '📦 Aktuelle Version',
+      update_installed_date: 'Installiert am: 05.08.2026',
+      update_source: 'Update-Quelle',
+      update_source_hint: 'Wähle die Plattform für Firmware-Updates.',
+      update_github: 'GitHub',
+      update_codeberg: 'Codeberg',
+      update_custom: 'Benutzerdefinierte URL',
+      update_repo: 'Repository URL',
+      update_custom_hint: 'Gib die vollständige URL zum Repository ein.',
+      update_auto_check: 'Automatisch nach Updates suchen',
+      update_check_interval: 'Such-Intervall (Stunden):',
+      update_interval_hint: 'Wie oft automatisch nach neuen Versionen gesucht wird.',
+      update_notify: 'Benachrichtigung bei verfügbarem Update',
+      update_notify_hint: 'Sendet eine Push-Benachrichtigung, wenn eine neue Version verfügbar ist.',
+      update_auto_install: 'Updates automatisch installieren',
+      update_auto_install_hint: '⚠️ Risiko: Automatische Installation kann zu Problemen führen. Nur für stabile Releases empfohlen.',
+      update_check_now: ' Jetzt nach Updates suchen',
+      update_available: '✅ Update verfügbar!',
+      update_install: ' Update installieren',
+      settings_backup: ' Backup & Wiederherstellung',
+      backup_desc: 'Exportiere alle Einstellungen als JSON-Datei oder importiere ein Backup.',
+      backup_export: 'Export',
+      backup_export_button: '📥 Alle Einstellungen exportieren',
+      backup_export_hint: 'Erstellt eine JSON-Datei mit allen Konfigurationen (inkl. Passwörter und Tokens).',
+      backup_import: 'Import',
+      backup_import_label: ' Backup-Datei auswählen (.json)',
+      backup_import_hint: 'Alle aktuellen Einstellungen werden überschrieben!',
+      backup_info_title: 'Was wird gesichert?',
+      backup_info_content: '✓ Futterzeiten & Mengen<br>✓ Logging-Konfiguration<br>✓ Benachrichtigungs-Einstellungen<br>✓ MQTT/ESPHome-Integration<br>✓ Motor-Kalibrierung & Typ<br>✓ Geräte-Kopplungen<br>✓ Update-Einstellungen<br>✓ Sensor-Konfigurationen<br>✓ WLAN-Zugangsdaten<br>✓ SMTP-Server-Konfiguration<br>✓ Login-Passwort & TOTP-Secret<br>✓ Theme & Sprache<br>✗ Event-Logs (werden nicht exportiert)',
+      settings_wifi: '📶 WLAN',
+      settings_wifi_password: 'Passwort',
+      settings_mqtt: '🏠 MQTT / ESPHome Integration',
+      mqtt_status_connected: 'Verbunden',
+      mqtt_uptime: 'Laufzeit',
+      mqtt_enable_label: 'MQTT-Integration aktivieren',
+      mqtt_enable_hint: 'Ermöglicht die Steuerung und Überwachung über Home Assistant, ESPHome oder andere MQTT-Clients.',
+      mqtt_server: 'MQTT-Server',
+      mqtt_server_hint: 'Hostname oder IP-Adresse deines MQTT-Brokers.',
+      mqtt_port: 'Port',
+      mqtt_prefix: 'Topic-Präfix',
+      mqtt_prefix_hint: 'Basis-Pfad für alle MQTT-Topics',
+      mqtt_user: 'Benutzername',
+      mqtt_password: 'Passwort',
+      mqtt_tls: 'TLS/SSL-Verschlüsselung verwenden',
+      mqtt_tls_hint: 'Empfohlen für MQTT-Server außerhalb des lokalen Netzwerks (Port 8883)',
+      mqtt_ha_desc: 'Bei aktivierter Auto-Discovery erscheinen alle Entities automatisch in Home Assistant.',
+      mqtt_ha_enable: 'Auto-Discovery aktivieren',
+      mqtt_features_title: '📡 Verfügbare Features über MQTT',
+      mqtt_features_desc: 'Wähle, welche Funktionen über MQTT verfügbar sein sollen.',
+      mqtt_feat_status: 'Status-Daten',
+      mqtt_feat_status_desc: 'Akku, WLAN, RTC, Netz',
+      mqtt_feat_control: 'Steuerung',
+      mqtt_feat_control_desc: 'Manuelle Fütterung, Reset',
+      mqtt_feat_schedule: 'Futterzeiten',
+      mqtt_feat_schedule_desc: 'Lesen & Schreiben der 8 Slots',
+      mqtt_feat_events: 'Events & Logs',
+      mqtt_feat_events_desc: 'Letzte Events, Klemmschutz',
+      mqtt_feat_config: 'Konfiguration',
+      mqtt_feat_config_desc: 'Motor-Schwellen, Zeitzone',
+      mqtt_feat_ota: 'OTA-Updates',
+      mqtt_feat_ota_desc: 'Firmware-Updates via MQTT',
+      mqtt_topics_title: '📋 MQTT-Topic-Vorschau',
+      mqtt_topics_desc: 'Diese Topics werden basierend auf deiner Konfiguration verwendet:',
+      mqtt_test_button: '🧪 Verbindung testen',
+      mqtt_discovery_button: '🏡 HA Discovery senden',
+      settings_smtp: '📧 SMTP-Server',
+      settings_smtp_server: 'SMTP-Server',
+      settings_smtp_port: 'SMTP-Port',
+      settings_smtp_user: 'Benutzername',
+      settings_smtp_password: 'Passwort',
+      settings_smtp_password_hint: 'Für Gmail: App-Passwort verwenden (2FA erforderlich)',
+      settings_smtp_encryption: 'Verschlüsselung',
+      settings_smtp_none: 'Keine (Port 25)',
+      settings_smtp_from: 'Absender-Adresse',
+      settings_security: '🔐 Sicherheit & Login',
+      settings_new_password: 'Neues Login-Passwort',
+      settings_new_password_hint: 'Wird als SHA256-Hash gespeichert (nicht im Klartext)',
+      settings_totp: 'TOTP aktivieren (2-Faktor-Authentifizierung)',
+      settings_totp_checkbox: 'TOTP mit Authenticator-App verwenden',
+      settings_totp_hint: 'Erfordert eine App wie Google Authenticator, Authy oder FreeOTP',
+      settings_totp_setup: '<strong>Setup:</strong> Scanne den QR-Code mit deiner Authenticator-App oder gib den Secret manuell ein.',
+      settings_totp_secret: 'Secret (manuell eingeben):',
+      settings_totp_verify: 'Verifizierungs-Code (zum Testen):',
+      settings_totp_verify_button: '✓ TOTP verifizieren & aktivieren',
+      settings_time: '🕐 Zeit & Fallback',
+      settings_timezone: 'Zeitzone',
+      settings_deepsleep: 'DeepSleep-Intervall (Minuten):',
+      settings_deepsleep_hint: 'Wie oft der ESP im Blackout-Modus aufwacht, um zu prüfen, ob gefüttert werden muss.',
+      settings_motor: '⚡ Motor & Klemmschutz',
+      settings_jam_threshold: 'Klemm-Stromschwelle (mA):',
+      settings_jam_threshold_hint: 'Bei Überschreitung wird der Motor gestoppt und die Hardware-LED leuchtet.',
+      settings_jam_timeout: 'Klemm-Timeout (ms):',
+      settings_jam_timeout_hint: 'Wie lange der Strom über der Schwelle sein muss, bevor ausgelöst wird.',
+      settings_light_barrier: '💡 Lichtschranke (Futterstand)',
+      sensor_light_barrier_enable: 'Lichtschranke aktivieren',
+      sensor_light_barrier_desc: 'Misst den Futterstand im Behälter. Alarm wenn Futter knapp wird.',
+      sensor_threshold: 'Alarm-Schwelle (%):',
+      sensor_threshold_hint: 'Bei diesem Füllstand wird Alarm ausgelöst.',
+      sensor_notify: 'Benachrichtigung bei Alarm',
+      sensor_led: 'Hardware-LED bei Alarm',
+      settings_end_switch: '🔄 Endschalter (Umdrehungszähler)',
+      sensor_end_switch_enable: 'Endschalter aktivieren',
+      sensor_end_switch_desc: 'Misst die Umdrehungen des Motors für präzise Dosierung.',
+      sensor_rotations_per_portion: 'Umdrehungen pro Portion:',
+      sensor_rotations_hint: 'Wie viele Umdrehungen für eine Standard-Portion benötigt werden.',
+      sensor_max_rotations: 'Max. Umdrehungen (Sicherheit):',
+      sensor_max_rotations_hint: 'Motor stoppt automatisch bei dieser Anzahl (Klemmschutz).',
+      sensor_notify_rotation: 'Benachrichtigung bei Anomalie',
+      settings_maintenance: '🔧 Wartung',
+      settings_sync_rtc: '🕐 RTC synchronisieren',
+      settings_restart: '🔄 ESP neu starten',
+      settings_factory_reset: '⚠️ Werkseinstellungen',
+      sensor_light_barrier: 'Lichtschranke (Futterstand)',
+      sensor_reset: 'Reset',
+      sensor_end_switch: 'Endschalter (Umdrehungen)',
+      sensor_reset_counter: 'Zähler reset',
+      sensor_low_food: 'Futterstand kritisch',
+      sensor_rotation_anomaly: 'Umdrehungs-Anomalie erkannt',
+      export_success: '✅ Einstellungen exportiert!',
+      import_success: '✅ Einstellungen importiert! Seite wird neu geladen...',
+      import_error: '❌ Fehler beim Import: Ungültige Datei',
+      import_confirm: '⚠️ Alle aktuellen Einstellungen werden überschrieben. Fortfahren?',
+      mqtt_save_success: '✅ MQTT-Einstellungen gespeichert!',
+      mqtt_test_success: '✅ Verbindung erfolgreich! Broker antwortet.',
+      mqtt_test_failed: '❌ Verbindung fehlgeschlagen. Bitte Server und Zugangsdaten prüfen.',
+      mqtt_discovery_sent: '✅ Home Assistant Discovery-Nachrichten gesendet!',
+      calibration_save_success: '✅ Kalibrierung gespeichert!',
+      calibration_running: '🔄 Motor läuft... Bitte Futter auffangen und wiegen.',
+      motor_save_success: '✅ Motor-Konfiguration gespeichert!',
+      update_save_success: '✅ Update-Einstellungen gespeichert!',
+      update_checking: '🔍 Suche nach Updates...',
+      update_none: '✅ Keine Updates verfügbar. Du hast die neueste Version.',
+      update_install_confirm: '️ Update installieren? Das Gerät wird neu gestartet.',
+      update_installing: '📥 Update wird installiert... Bitte nicht vom Strom trennen!',
+      device_add_prompt: 'IP-Adresse des neuen Geräts eingeben:',
+      device_sync_success: '✅ Sync erfolgreich!',
+      device_disconnect_confirm: '⚠️ Gerät wirklich trennen?',
+      sync_save_success: '✅ Sync-Einstellungen gespeichert!'
+    },
+	    en: {
+      login_title: 'Smart Feeder Login',
+      login_error: 'Wrong password or TOTP code!',
+      login_password: 'Password',
+      login_totp: 'TOTP Code (6 digits)',
+      login_totp_hint: 'From your authenticator app',
+      login_remember: 'Stay logged in (30 days)',
+      login_button: ' Login',
+      logout_button: '🚪 Logout',
+      header_title: 'Smart Feeder',
+      status_wifi: 'WiFi',
+      status_battery: 'Battery',
+      status_power: 'Power',
+      tab_dashboard: '📊 Dashboard',
+      tab_schedule: '⏰ Schedule',
+      tab_devices: '🔗 Devices',
+      tab_logging: '📝 Logging',
+      tab_notifications: '🔔 Notifications',
+      tab_settings: '⚙️ Settings',
+      jam_title: '⚠️ Jam protection active!',
+      jam_desc: 'Motor blocked since 14:32. Press the manual feed button to reset.',
+      jam_button: 'Manual feed',
+      dashboard_overview: 'Overview',
+      dash_time: 'Current time',
+      dash_next: 'Next feeding',
+      dash_next_sub: 'in 2h 15min',
+      dash_battery: 'Battery',
+      dash_battery_sub: '~8 months reserve',
+      dash_fed_today: 'Fed today',
+      dash_fed_today_sub: 'last: 12:00 ✓',
+      manual_feed_title: '🔘 Manual feeding',
+      manual_feed_desc: 'Triggers an immediate feeding (default amount: 3 seconds). Also resets jam protection if successful.',
+      manual_feed_button: '🍽️ Feed now (3s)',
+      recent_events: '📋 Recent events',
+      schedule_title: 'Schedule feedings',
+      schedule_desc: 'Configure up to 8 daily feeding times. The RTC maintains the times even during power outages.',
+      schedule_active: 'Active',
+      schedule_time: 'Time',
+      schedule_duration: 'Duration (sec.)',
+      schedule_amount: 'Amount (approx. g)',
+      schedule_last: 'Last execution',
+      save_button: '💾 Save',
+      test_feed_button: '🧪 Test feeding',
+      devices_title: 'Device Management',
+      devices_desc: 'Link multiple Smart Feeders together and synchronize feeding times or control them centrally.',
+      devices_local: '📍 This device',
+      devices_role_master: 'Master',
+      devices_uptime: 'Uptime: 14 days 6 hours',
+      devices_connected: '🔗 Connected devices',
+      devices_role_slave: 'Slave',
+      devices_sync_async: 'Asynchronous',
+      devices_sync_sync: 'Synchronous',
+      devices_sync_now: 'Sync now',
+      devices_disconnect: 'Disconnect',
+      devices_add: '➕ Link new device',
+      devices_sync_mode: '🔄 Synchronization mode',
+      devices_sync_type: 'Sync type',
+      devices_sync_async_full: 'Asynchronous - Each device feeds independently',
+      devices_sync_sync_full: 'Synchronous - All devices feed simultaneously',
+      devices_sync_master_full: 'Master-Slave - Master controls all slaves',
+      devices_sync_hint: 'Choose how the connected devices should be synchronized.',
+      devices_sync_interval: 'Sync interval (seconds):',
+      devices_sync_interval_hint: 'How often the devices synchronize their configurations.',
+      logging_title: 'Event logging',
+      log_retention_title: '📅 Retention period',
+      log_retention_label: 'Overwrite logs after (days):',
+      log_retention_hint: 'Older entries are automatically deleted. Maximum 500 entries in memory.',
+      log_events_title: '🎯 Which events to log?',
+      log_events_desc: 'Choose which events should be saved in the log.',
+      log_viewer_title: '📜 Log viewer',
+      log_filter_all: 'All events',
+      log_filter_feeding: 'Only feedings',
+      log_filter_error: 'Only errors',
+      log_filter_system: 'Only system',
+      log_clear_button: '️ Clear logs',
+      notify_title: 'Push notifications',
+      notify_desc: 'Configure which events you want to be notified about and via which channel.',
+      notify_channels_title: '📡 Configure channels',
+      notify_discord: '🟣 Discord webhook URL',
+      notify_discord_hint: 'Create a webhook in your Discord server settings.',
+      notify_pushover: '🔔 Pushover token & user',
+      notify_telegram: '✈️ Telegram bot token & chat ID',
+      notify_email: ' Email (via SMTP)',
+      notify_email_hint: 'SMTP server is configured in settings.',
+      notify_events_title: '🎯 Events per channel',
+      notify_events_desc: 'Choose for each event which channels you want to be notified through.',
+      notify_test_button: '🧪 Send test message',
+      settings_title: 'Settings',
+      settings_calibration: '🎯 Motor calibration',
+      calibration_desc: 'Calibrate how long the motor needs to run to dispense exactly one portion of food.',
+      calibration_wizard: '🔧 Calibration wizard',
+      calibration_step1: 'Place an empty bowl under the feeder',
+      calibration_step2: 'Click "Start motor" and count how long it runs',
+      calibration_step3: 'Weigh the dispensed food',
+      calibration_step4: 'Enter the measured time and weight',
+      calibration_step5: 'The system automatically calculates the time per gram',
+      calibration_time: 'Motor runtime (seconds):',
+      calibration_weight: 'Dispensed food (grams):',
+      calibration_result: 'Calculated time per gram:',
+      calibration_result_hint: 'This value is used for all feeding times.',
+      calibration_start: '🔄 Start motor (test)',
+      calibration_save: '💾 Save calibration',
+      settings_motor_type: '⚡ Motor type & control',
+      motor_type: 'Motor type',
+      motor_dc: 'DC motor (direct current)',
+      motor_servo: 'Servo motor',
+      motor_stepper: 'Stepper motor',
+      motor_custom: 'Custom',
+      motor_type_hint: 'Choose the motor type you have installed in your feeder.',
+      motor_voltage: 'Operating voltage (V):',
+      motor_current: 'Maximum current (mA):',
+      motor_current_hint: 'Used for jam protection.',
+      motor_driver: 'Motor driver:',
+      motor_mosfet: 'MOSFET (IRLZ44N / IRLB8721)',
+      motor_l298n: 'L298N H-Bridge',
+      motor_l293d: 'L293D H-Bridge',
+      motor_relay: 'Relay',
+      servo_angle: 'Rotation angle per portion (degrees):',
+      servo_speed: 'Speed (ms per 60°):',
+      stepper_steps: 'Steps per portion:',
+      stepper_speed: 'Speed (RPM):',
+      stepper_driver: 'Driver:',
+      custom_config: 'Custom configuration:',
+      custom_config_hint: 'Advanced configuration for special motors.',
+      settings_updates: '🔄 Firmware updates',
+      update_current_version: '📦 Current version',
+      update_installed_date: 'Installed on: 05.08.2026',
+      update_source: 'Update source',
+      update_source_hint: 'Choose the platform for firmware updates.',
+      update_github: 'GitHub',
+      update_codeberg: 'Codeberg',
+      update_custom: 'Custom URL',
+      update_repo: 'Repository URL',
+      update_custom_hint: 'Enter the full URL to the repository.',
+      update_auto_check: 'Automatically check for updates',
+      update_check_interval: 'Check interval (hours):',
+      update_interval_hint: 'How often to automatically search for new versions.',
+      update_notify: 'Notification when update available',
+      update_notify_hint: 'Sends a push notification when a new version is available.',
+      update_auto_install: 'Automatically install updates',
+      update_auto_install_hint: '⚠️ Risk: Automatic installation can cause problems. Only recommended for stable releases.',
+      update_check_now: '🔍 Check for updates now',
+      update_available: '✅ Update available!',
+      update_install: '📥 Install update',
+      settings_backup: '💾 Backup & Restore',
+      backup_desc: 'Export all settings as a JSON file or import a backup.',
+      backup_export: 'Export',
+      backup_export_button: '📥 Export all settings',
+      backup_export_hint: 'Creates a JSON file with all configurations (including passwords and tokens).',
+      backup_import: 'Import',
+      backup_import_label: '📤 Select backup file (.json)',
+      backup_import_hint: 'All current settings will be overwritten!',
+      backup_info_title: 'What is backed up?',
+      backup_info_content: '✓ Feeding times & amounts<br>✓ Logging configuration<br>✓ Notification settings<br>✓ MQTT/ESPHome integration<br>✓ Motor calibration & type<br>✓ Device linkings<br>✓ Update settings<br>✓ Sensor configurations<br>✓ WiFi credentials<br>✓ SMTP server configuration<br>✓ Login password & TOTP secret<br>✓ Theme & language<br>✗ Event logs (not exported)',
+      settings_wifi: ' WiFi',
+      settings_wifi_password: 'Password',
+      settings_mqtt: '🏠 MQTT / ESPHome Integration',
+      mqtt_status_connected: 'Connected',
+      mqtt_uptime: 'Uptime',
+      mqtt_enable_label: 'Enable MQTT integration',
+      mqtt_enable_hint: 'Enables control and monitoring via Home Assistant, ESPHome or other MQTT clients.',
+      mqtt_server: 'MQTT Server',
+      mqtt_server_hint: 'Hostname or IP address of your MQTT broker.',
+      mqtt_port: 'Port',
+      mqtt_prefix: 'Topic prefix',
+      mqtt_prefix_hint: 'Base path for all MQTT topics',
+      mqtt_user: 'Username',
+      mqtt_password: 'Password',
+      mqtt_tls: 'Use TLS/SSL encryption',
+      mqtt_tls_hint: 'Recommended for MQTT servers outside the local network (port 8883)',
+      mqtt_ha_desc: 'With Auto-Discovery enabled, all entities appear automatically in Home Assistant.',
+      mqtt_ha_enable: 'Enable Auto-Discovery',
+      mqtt_features_title: '📡 Available features via MQTT',
+      mqtt_features_desc: 'Choose which functions should be available via MQTT.',
+      mqtt_feat_status: 'Status data',
+      mqtt_feat_status_desc: 'Battery, WiFi, RTC, Power',
+      mqtt_feat_control: 'Control',
+      mqtt_feat_control_desc: 'Manual feeding, Reset',
+      mqtt_feat_schedule: 'Feeding times',
+      mqtt_feat_schedule_desc: 'Read & write the 8 slots',
+      mqtt_feat_events: 'Events & logs',
+      mqtt_feat_events_desc: 'Recent events, Jam protection',
+      mqtt_feat_config: 'Configuration',
+      mqtt_feat_config_desc: 'Motor thresholds, Timezone',
+      mqtt_feat_ota: 'OTA updates',
+      mqtt_feat_ota_desc: 'Firmware updates via MQTT',
+      mqtt_topics_title: '📋 MQTT topic preview',
+      mqtt_topics_desc: 'These topics are used based on your configuration:',
+      mqtt_test_button: '🧪 Test connection',
+      mqtt_discovery_button: '🏡 Send HA discovery',
+      settings_smtp: '📧 SMTP server',
+      settings_smtp_server: 'SMTP server',
+      settings_smtp_port: 'SMTP port',
+      settings_smtp_user: 'Username',
+      settings_smtp_password: 'Password',
+      settings_smtp_password_hint: 'For Gmail: Use app password (2FA required)',
+      settings_smtp_encryption: 'Encryption',
+      settings_smtp_none: 'None (port 25)',
+      settings_smtp_from: 'Sender address',
+      settings_security: '🔐 Security & login',
+      settings_new_password: 'New login password',
+      settings_new_password_hint: 'Stored as SHA256 hash (not in plain text)',
+      settings_totp: 'Enable TOTP (2-factor authentication)',
+      settings_totp_checkbox: 'Use TOTP with authenticator app',
+      settings_totp_hint: 'Requires an app like Google Authenticator, Authy or FreeOTP',
+      settings_totp_setup: '<strong>Setup:</strong> Scan the QR code with your authenticator app or enter the secret manually.',
+      settings_totp_secret: 'Secret (enter manually):',
+      settings_totp_verify: 'Verification code (for testing):',
+      settings_totp_verify_button: '✓ Verify & activate TOTP',
+      settings_time: '🕐 Time & fallback',
+      settings_timezone: 'Timezone',
+      settings_deepsleep: 'DeepSleep interval (minutes):',
+      settings_deepsleep_hint: 'How often the ESP wakes up in blackout mode to check if feeding is needed.',
+      settings_motor: '⚡ Motor & jam protection',
+      settings_jam_threshold: 'Jam current threshold (mA):',
+      settings_jam_threshold_hint: 'When exceeded, the motor is stopped and the hardware LED lights up.',
+      settings_jam_timeout: 'Jam timeout (ms):',
+      settings_jam_timeout_hint: 'How long the current must be above the threshold before triggering.',
+      settings_light_barrier: ' Light barrier (Food level)',
+      sensor_light_barrier_enable: 'Enable light barrier',
+      sensor_light_barrier_desc: 'Measures food level in container. Alarm when food is low.',
+      sensor_threshold: 'Alarm threshold (%):',
+      sensor_threshold_hint: 'Alarm triggers at this fill level.',
+      sensor_notify: 'Notification on alarm',
+      sensor_led: 'Hardware LED on alarm',
+      settings_end_switch: '🔄 Limit switch (Rotation counter)',
+      sensor_end_switch_enable: 'Enable limit switch',
+      sensor_end_switch_desc: 'Measures motor rotations for precise dosing.',
+      sensor_rotations_per_portion: 'Rotations per portion:',
+      sensor_rotations_hint: 'How many rotations are needed for a standard portion.',
+      sensor_max_rotations: 'Max. rotations (safety):',
+      sensor_max_rotations_hint: 'Motor stops automatically at this count (jam protection).',
+      sensor_notify_rotation: 'Notification on anomaly',
+      settings_maintenance: '🔧 Maintenance',
+      settings_sync_rtc: '🕐 Synchronize RTC',
+      settings_restart: '🔄 Restart ESP',
+      settings_factory_reset: '⚠️ Factory reset',
+      sensor_light_barrier: 'Light barrier (Food level)',
+      sensor_reset: 'Reset',
+      sensor_end_switch: 'Limit switch (Rotations)',
+      sensor_reset_counter: 'Reset counter',
+      sensor_low_food: 'Food level critical',
+      sensor_rotation_anomaly: 'Rotation anomaly detected',
+      export_success: '✅ Settings exported!',
+      import_success: '✅ Settings imported! Page will reload...',
+      import_error: '❌ Import error: Invalid file',
+      import_confirm: '⚠️ All current settings will be overwritten. Continue?',
+      mqtt_save_success: '✅ MQTT settings saved!',
+      mqtt_test_success: '✅ Connection successful! Broker is responding.',
+      mqtt_test_failed: '❌ Connection failed. Please check server and credentials.',
+      mqtt_discovery_sent: '✅ Home Assistant discovery messages sent!',
+      calibration_save_success: '✅ Calibration saved!',
+      calibration_running: '🔄 Motor running... Please catch and weigh the food.',
+      motor_save_success: '✅ Motor configuration saved!',
+      update_save_success: '✅ Update settings saved!',
+      update_checking: '🔍 Checking for updates...',
+      update_none: '✅ No updates available. You have the latest version.',
+      update_install_confirm: '⚠️ Install update? The device will restart.',
+      update_installing: ' Installing update... Do not disconnect power!',
+      device_add_prompt: 'Enter IP address of new device:',
+      device_sync_success: '✅ Sync successful!',
+      device_disconnect_confirm: '⚠️ Really disconnect device?',
+      sync_save_success: '✅ Sync settings saved!'
+    }
+  };
+
+  let currentLang = localStorage.getItem('lang') || 'de';
+
+  function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (translations[currentLang][key]) {
+        el.innerHTML = translations[currentLang][key];
+      }
+    });
+    document.getElementById('langBtn').textContent = currentLang === 'de' ? 'EN' : 'DE';
+    renderMqttTopicsPreview();
+  }
+
+  function toggleLanguage() {
+    currentLang = currentLang === 'de' ? 'en' : 'de';
+    localStorage.setItem('lang', currentLang);
+    applyTranslations();
+    renderSchedule();
+    renderEventConfig();
+    renderLogs();
+    renderRecentEvents();
+  }
+
+  let currentTheme = localStorage.getItem('theme') || 'light';
+  
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    document.getElementById('themeBtn').textContent = currentTheme === 'light' ? '🌙' : '☀️';
+  }
+
+  function toggleTheme() {
+    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    localStorage.setItem('theme', currentTheme);
+    applyTheme();
+  }
+
+  function toggleCollapsible(header) {
+    header.classList.toggle('collapsed');
+    const content = header.nextElementSibling;
+    content.classList.toggle('collapsed');
+  }
+
+  function doLogin() {
+    const password = document.getElementById('loginPassword').value;
+    const totp = document.getElementById('loginTOTP').value;
+    const totpEnabled = localStorage.getItem('totpEnabled') === 'true';
+    
+    if (password === 'katze123' && (!totpEnabled || totp === '123456')) {
+      localStorage.setItem('loggedIn', 'true');
+      document.getElementById('loginOverlay').classList.add('hidden');
+      showToast('success', 'Erfolgreich angemeldet', 'Willkommen zurück!');
+    } else {
+      showToast('error', 'Login fehlgeschlagen', translations[currentLang].login_error);
+    }
+  }
+
+  function doLogout() {
+    localStorage.removeItem('loggedIn');
+    document.getElementById('loginOverlay').classList.remove('hidden');
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginTOTP').value = '';
+    showToast('info', 'Abgemeldet', 'Du wurdest erfolgreich abgemeldet.');
+  }
+
+  if (localStorage.getItem('loggedIn') === 'true') {
+    document.getElementById('loginOverlay').classList.add('hidden');
+  }
+
+  function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.textContent = '🙈';
+    } else {
+      input.type = 'password';
+      btn.textContent = '👁️';
+    }
+  }
+
+  document.getElementById('enableTOTP').addEventListener('change', function() {
+    document.getElementById('totpSetup').style.display = this.checked ? 'block' : 'none';
+  });
+
+  function verifyTOTP() {
+    const code = document.getElementById('totpVerify').value;
+    if (code.length === 6 && /^\d+$/.test(code)) {
+      showToast('success', 'TOTP verifiziert', 'TOTP wurde erfolgreich aktiviert!');
+      localStorage.setItem('totpEnabled', 'true');
+    } else {
+      showToast('error', 'Ungültiger Code', 'Bitte versuche es erneut.');
+    }
+  }
+
+  function showTab(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('currentTime').textContent =
+      now.toLocaleTimeString(currentLang === 'de' ? 'de-DE' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // === TIMEZONE POPULATION ===
+  function populateTimezones() {
+    const select = document.getElementById('timezoneSelect');
+    if (!select) return;
+    let timezones = [];
+    if (typeof Intl !== 'undefined' && Intl.supportedValuesOf) {
+      timezones = Intl.supportedValuesOf('timeZone');
+    } else {
+      timezones = ["Europe/Berlin", "Europe/London", "Europe/Paris", "America/New_York", "Asia/Tokyo", "UTC"];
+    }
+    timezones.sort((a, b) => a.localeCompare(b));
+    select.innerHTML = '<option value="auto">🌐 ' + (currentLang === 'de' ? 'Automatisch (Lokale Browser-Zeit)' : 'Automatic (Local Browser Time)') + '</option>';
+    timezones.forEach(tz => {
+      const option = document.createElement('option');
+      option.value = tz;
+      option.textContent = tz.replace(/_/g, ' '); 
+      select.appendChild(option);
+    });
+    try {
+      const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (timezones.includes(userTz)) select.value = userTz;
+    } catch (e) {}
+  }
+
+  const defaultSchedule = [
+    { active: true, time: '07:00', duration: 3, lastRun: 'Heute 07:00 ✓' },
+    { active: true, time: '12:00', duration: 3, lastRun: 'Heute 12:00 ✓' },
+    { active: true, time: '18:00', duration: 4, lastRun: '-' },
+    { active: false, time: '22:00', duration: 3, lastRun: '-' },
+    { active: false, time: '00:00', duration: 3, lastRun: '-' },
+    { active: false, time: '00:00', duration: 3, lastRun: '-' },
+    { active: false, time: '00:00', duration: 3, lastRun: '-' },
+    { active: false, time: '00:00', duration: 3, lastRun: '-' }
+  ];
+
+  function renderSchedule() {
+    const saved = JSON.parse(localStorage.getItem('schedule') || 'null') || defaultSchedule;
+    const tbody = document.getElementById('scheduleBody');
+    tbody.innerHTML = '';
+    saved.forEach((s, i) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><label class="switch"><input type="checkbox" ${s.active ? 'checked' : ''} onchange="updateSchedule(${i}, 'active', this.checked)"><span class="slider"></span></label></td>
+        <td><input type="time" value="${s.time}" onchange="updateSchedule(${i}, 'time', this.value)"></td>
+        <td><input type="number" value="${s.duration}" min="1" max="30" style="width: 80px;" onchange="updateSchedule(${i}, 'duration', this.value)"></td>
+        <td>${(s.duration * 5).toFixed(0)}g</td>
+        <td><span class="badge ${s.lastRun.includes('✓') ? 'badge-info' : 'badge-warn'}">${s.lastRun}</span></td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  function updateSchedule(idx, field, value) {
+    const saved = JSON.parse(localStorage.getItem('schedule') || 'null') || defaultSchedule;
+    saved[idx][field] = value;
+    localStorage.setItem('schedule', JSON.stringify(saved));
+    if (field === 'duration') renderSchedule();
+  }
+
+  function saveSchedule() { showToast('success', 'Gespeichert', 'Futterzeiten wurden gespeichert!'); }
+  function testFeeding() { showToast('info', 'Test-Fütterung', 'Motor läuft 3 Sekunden...'); }
+
+  const events = [
+    { id: 'feeding_ok', name: { de: 'Fütterung erfolgreich', en: 'Feeding successful' }, desc: { de: 'Motor lief wie geplant', en: 'Motor ran as planned' }, category: 'feeding' },
+    { id: 'feeding_jam', name: { de: 'Klemmschutz ausgelöst', en: 'Jam protection triggered' }, desc: { de: 'Motor blockiert', en: 'Motor blocked' }, category: 'error' },
+    { id: 'watchdog_reset', name: { de: 'Watchdog-Reset', en: 'Watchdog reset' }, desc: { de: 'ESP wurde neu gestartet', en: 'ESP was restarted' }, category: 'error' },
+    { id: 'wifi_disconnect', name: { de: 'WLAN getrennt', en: 'WiFi disconnected' }, desc: { de: 'Verbindung verloren', en: 'Connection lost' }, category: 'system' },
+    { id: 'wifi_connect', name: { de: 'WLAN verbunden', en: 'WiFi connected' }, desc: { de: 'Verbindung hergestellt', en: 'Connection established' }, category: 'system' },
+    { id: 'low_battery', name: { de: 'Akku niedrig', en: 'Low battery' }, desc: { de: 'Unter 20% Kapazität', en: 'Below 20% capacity' }, category: 'error' },
+    { id: 'power_outage', name: { de: 'Stromausfall', en: 'Power outage' }, desc: { de: 'Netzspannung weg', en: 'Mains power lost' }, category: 'system' },
+    { id: 'power_restored', name: { de: 'Strom wiederhergestellt', en: 'Power restored' }, desc: { de: 'Netzspannung zurück', en: 'Mains power back' }, category: 'system' },
+    { id: 'manual_feed', name: { de: 'Manuelle Fütterung', en: 'Manual feeding' }, desc: { de: 'Über Taster ausgelöst', en: 'Triggered via button' }, category: 'feeding' },
+    { id: 'update_available', name: { de: 'Update verfügbar', en: 'Update available' }, desc: { de: 'Neue Firmware-Version', en: 'New firmware version' }, category: 'system' },
+    { id: 'device_sync', name: { de: 'Geräte-Sync', en: 'Device sync' }, desc: { de: 'Konfiguration synchronisiert', en: 'Configuration synchronized' }, category: 'system' },
+    { id: 'sensor_low_food', name: { de: 'Futterstand kritisch', en: 'Food level critical' }, desc: { de: 'Lichtschranke meldet leeren Behälter', en: 'Light barrier reports empty container' }, category: 'error' },
+    { id: 'sensor_rotation_anomaly', name: { de: 'Umdrehungs-Anomalie', en: 'Rotation anomaly' }, desc: { de: 'Endschalter meldet Abweichung', en: 'Limit switch reports deviation' }, category: 'error' }
+  ];
+
+  function renderEventConfig() {
+    const logCfg = JSON.parse(localStorage.getItem('logConfig') || '{}');
+    const notifyCfg = JSON.parse(localStorage.getItem('notifyConfig') || '{}');
+    const logDiv = document.getElementById('eventLogConfig');
+    logDiv.innerHTML = '';
+    events.forEach(e => {
+      const row = document.createElement('div');
+      row.className = 'event-row';
+      row.innerHTML = `
+        <div><div class="event-name">${e.name[currentLang]}</div><div class="event-desc">${e.desc[currentLang]}</div></div>
+        <div style="text-align: center;"><label class="switch"><input type="checkbox" ${logCfg[e.id] !== false ? 'checked' : ''} onchange="updateLogConfig('${e.id}', this.checked)"><span class="slider"></span></label></div>
+        <div></div><div></div><div></div>
+      `;
+      logDiv.appendChild(row);
+    });
+    const notifyDiv = document.getElementById('eventNotifyConfig');
+    notifyDiv.innerHTML = `<div class="event-row header"><div>Event</div><div style="text-align: center;">Discord</div><div style="text-align: center;">Push</div><div style="text-align: center;">Tgram</div><div style="text-align: center;">Mail</div></div>`;
+    events.forEach(e => {
+      const row = document.createElement('div');
+      row.className = 'event-row';
+      const cfg = notifyCfg[e.id] || {};
+      row.innerHTML = `
+        <div><div class="event-name">${e.name[currentLang]}</div><div class="event-desc">${e.desc[currentLang]}</div></div>
+        <div style="text-align: center;"><label class="switch"><input type="checkbox" ${cfg.discord ? 'checked' : ''} onchange="updateNotify('${e.id}', 'discord', this.checked)"><span class="slider"></span></label></div>
+        <div style="text-align: center;"><label class="switch"><input type="checkbox" ${cfg.pushover ? 'checked' : ''} onchange="updateNotify('${e.id}', 'pushover', this.checked)"><span class="slider"></span></label></div>
+        <div style="text-align: center;"><label class="switch"><input type="checkbox" ${cfg.telegram ? 'checked' : ''} onchange="updateNotify('${e.id}', 'telegram', this.checked)"><span class="slider"></span></label></div>
+        <div style="text-align: center;"><label class="switch"><input type="checkbox" ${cfg.email ? 'checked' : ''} onchange="updateNotify('${e.id}', 'email', this.checked)"><span class="slider"></span></label></div>
+      `;
+      notifyDiv.appendChild(row);
+    });
+  }
+
+  function updateLogConfig(id, value) { const cfg = JSON.parse(localStorage.getItem('logConfig') || '{}'); cfg[id] = value; localStorage.setItem('logConfig', JSON.stringify(cfg)); }
+  function updateNotify(id, channel, value) { const cfg = JSON.parse(localStorage.getItem('notifyConfig') || '{}'); if (!cfg[id]) cfg[id] = {}; cfg[id][channel] = value; localStorage.setItem('notifyConfig', JSON.stringify(cfg)); }
+  function saveNotifications() { showToast('success', 'Gespeichert', 'Benachrichtigungs-Einstellungen wurden gespeichert!'); }
+  function testNotification() { showToast('info', 'Test-Nachricht', 'Test-Nachricht an alle konfigurierten Kanäle gesendet!'); }
+  
+  function saveSecurity() {
+    const newPassword = document.getElementById('newPassword').value;
+    const totpEnabled = document.getElementById('enableTOTP').checked;
+    if (newPassword) showToast('success', 'Passwort geändert', 'Passwort wurde als SHA256-Hash gespeichert');
+    if (totpEnabled) showToast('success', 'TOTP aktiviert', '2-Faktor-Authentifizierung wurde aktiviert');
+  }
+
+  const sampleLogs = [
+    { time: '10.08.2026 12:00:15', type: 'feeding_ok', msg: { de: 'Fütterung erfolgreich (3s)', en: 'Feeding successful (3s)' }, level: 'success' },
+    { time: '09.08.2026 22:14:33', type: 'wifi_disconnect', msg: { de: 'WLAN getrennt - Fallback auf RTC', en: 'WiFi disconnected - Fallback to RTC' }, level: 'warn' },
+    { time: '08.08.2026 14:32:11', type: 'feeding_jam', msg: { de: 'Klemmschutz ausgelöst - Motor gestoppt', en: 'Jam protection triggered - Motor stopped' }, level: 'error' },
+    { time: '07.08.2026 23:45:00', type: 'power_outage', msg: { de: 'Stromausfall erkannt - DeepSleep aktiv', en: 'Power outage detected - DeepSleep active' }, level: 'warn' }
+  ];
+
+  function renderLogs() {
+    const filter = document.getElementById('logFilter').value;
+    const viewer = document.getElementById('logViewer');
+    viewer.innerHTML = '';
+    const filtered = sampleLogs.filter(l => {
+      if (filter === 'all') return true;
+      if (filter === 'feeding') return l.type.includes('feeding');
+      if (filter === 'error') return l.level === 'error';
+      if (filter === 'system') return ['wifi_', 'power_', 'watchdog', 'update_', 'device_', 'sensor_'].some(p => l.type.startsWith(p));
+      return true;
+    });
+    filtered.forEach(l => {
+      const div = document.createElement('div');
+      div.className = `log-entry ${l.level}`;
+      div.innerHTML = `<div class="log-time">${l.time}</div><div>${l.msg[currentLang]}</div>`;
+      viewer.appendChild(div);
+    });
+  }
+
+  function renderRecentEvents() {
+    const div = document.getElementById('recentEvents');
+    div.innerHTML = '';
+    sampleLogs.slice(0, 5).forEach(l => {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${l.level}`;
+      entry.innerHTML = `<div class="log-time">${l.time}</div><div>${l.msg[currentLang]}</div>`;
+      div.appendChild(entry);
+    });
+  }
+
+  function clearLogs() { showToast('warning', 'Logs gelöscht', 'Alle Log-Einträge wurden entfernt.'); }
+  function simulateResetJam() { showToast('success', 'Klemmschutz zurückgesetzt', 'Manuelle Fütterung war erfolgreich!'); document.getElementById('jamAlert').classList.add('hidden'); }
+  function manualFeed() { showToast('success', 'Fütterung erfolgreich', 'Manuelle Fütterung gestartet (3s)... ✓'); }
+  function updateMotorConfig() {
+    const motorType = document.getElementById('motorType').value;
+    document.getElementById('motorConfig_dc').style.display = motorType === 'dc' ? 'block' : 'none';
+    document.getElementById('motorConfig_servo').style.display = motorType === 'servo' ? 'block' : 'none';
+    document.getElementById('motorConfig_stepper').style.display = motorType === 'stepper' ? 'block' : 'none';
+    document.getElementById('motorConfig_custom').style.display = motorType === 'custom' ? 'block' : 'none';
+  }
+  function saveMotorConfig() { showToast('success', 'Gespeichert', translations[currentLang].motor_save_success); }
+  
+  function calculateCalibration() {
+    const time = parseFloat(document.getElementById('calibTime').value) || 0;
+    const weight = parseFloat(document.getElementById('calibWeight').value) || 0;
+    const result = weight > 0 ? (time / weight).toFixed(3) : '0.000';
+    document.getElementById('calibResult').value = `${result} s/g`;
+  }
+  document.getElementById('calibTime').addEventListener('input', calculateCalibration);
+  document.getElementById('calibWeight').addEventListener('input', calculateCalibration);
+  function startCalibration() { showToast('info', 'Kalibrierung läuft', translations[currentLang].calibration_running); }
+  function saveCalibration() { showToast('success', 'Gespeichert', translations[currentLang].calibration_save_success); }
+  function addDevice() { const ip = prompt(translations[currentLang].device_add_prompt, '192.168.1.'); if (ip) showToast('success', 'Gerät gekoppelt', `Gerät ${ip} wurde erfolgreich verbunden!`); }
+  function saveSyncSettings() { showToast('success', 'Gespeichert', translations[currentLang].sync_save_success); }
+  function updateSourceChanged() { document.getElementById('customRepoGroup').style.display = document.getElementById('updateSource').value === 'custom' ? 'block' : 'none'; }
+  function toggleAutoUpdateConfig() { const enabled = document.getElementById('autoUpdateCheck').checked; const configDiv = document.getElementById('autoUpdateConfig'); configDiv.style.opacity = enabled ? '1' : '0.4'; configDiv.style.pointerEvents = enabled ? 'auto' : 'none'; }
+  
+  function checkForUpdates() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = translations[currentLang].update_checking;
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      if (Math.random() > 0.3) { document.getElementById('updateResult').style.display = 'block'; showToast('success', 'Update gefunden', 'Eine neue Version ist verfügbar!'); } 
+      else { showToast('info', 'Keine Updates', translations[currentLang].update_none); }
+    }, 1500);
+  }
+  function installUpdate() { if (confirm(translations[currentLang].update_install_confirm)) showToast('warning', 'Update wird installiert', translations[currentLang].update_installing, 10000); }
+  function saveUpdateSettings() { showToast('success', 'Gespeichert', translations[currentLang].update_save_success); }
+
+  // === SENSOR FUNKTIONEN ===
+  function toggleLightBarrier() {
+    const enabled = document.getElementById('lightBarrierEnabled').checked;
+    document.getElementById('lightBarrierConfig').style.display = enabled ? 'block' : 'none';
+    document.getElementById('lightBarrierCard').style.display = enabled ? 'block' : 'none';
+    document.getElementById('sensorCards').style.display = (enabled || document.getElementById('endSwitchEnabled').checked) ? 'block' : 'none';
+  }
+  function saveLightBarrierConfig() { showToast('success', 'Gespeichert', 'Lichtschranken-Konfiguration wurde gespeichert.'); }
+  function resetLightBarrier() {
+    showToast('info', 'Reset', 'Lichtschranke wurde zurückgesetzt.');
+    document.getElementById('lightBarrierCard').classList.remove('alarm', 'warning');
+    document.getElementById('lightBarrierLed').className = 'sensor-led ok';
+    document.getElementById('lightBarrierValue').textContent = '100%';
+    document.getElementById('lightBarrierBar').style.width = '100%';
+    document.getElementById('lightBarrierBar').className = 'sensor-bar-fill';
+    document.getElementById('lightBarrierStatus').textContent = currentLang === 'de' ? 'Futterstand: Voll (Reset)' : 'Food level: Full (Reset)';
+  }
+  function toggleEndSwitch() {
+    const enabled = document.getElementById('endSwitchEnabled').checked;
+    document.getElementById('endSwitchConfig').style.display = enabled ? 'block' : 'none';
+    document.getElementById('endSwitchCard').style.display = enabled ? 'block' : 'none';
+    document.getElementById('sensorCards').style.display = (enabled || document.getElementById('lightBarrierEnabled').checked) ? 'block' : 'none';
+  }
+  function saveEndSwitchConfig() { showToast('success', 'Gespeichert', 'Endschalter-Konfiguration wurde gespeichert.'); }
+  function resetEndSwitch() { showToast('info', 'Reset', 'Umdrehungszähler wurde zurückgesetzt.'); document.getElementById('endSwitchValue').textContent = '0'; document.getElementById('endSwitchLed').className = 'sensor-led ok'; }
+
+  function simulateSensorUpdates() {
+    if (document.getElementById('lightBarrierEnabled').checked) {
+      let currentVal = parseInt(document.getElementById('lightBarrierValue').textContent) || 85;
+      if (currentVal > 0) currentVal -= 1;
+      document.getElementById('lightBarrierValue').textContent = currentVal + '%';
+      document.getElementById('lightBarrierBar').style.width = currentVal + '%';
+      const threshold = parseInt(document.getElementById('lightBarrierThreshold').value) || 20;
+      const card = document.getElementById('lightBarrierCard');
+      const led = document.getElementById('lightBarrierLed');
+      const bar = document.getElementById('lightBarrierBar');
+      const status = document.getElementById('lightBarrierStatus');
+      if (currentVal <= threshold) {
+        card.className = 'sensor-status-card alarm'; led.className = 'sensor-led alarm'; bar.className = 'sensor-bar-fill alarm';
+        status.textContent = '⚠️ ALARM: ' + translations[currentLang].sensor_low_food;
+      } else if (currentVal <= threshold + 10) {
+        card.className = 'sensor-status-card warning'; led.className = 'sensor-led warning'; bar.className = 'sensor-bar-fill warning';
+        status.textContent = currentLang === 'de' ? 'Futterstand: Niedrig' : 'Food level: Low';
+      } else {
+        card.className = 'sensor-status-card'; led.className = 'sensor-led ok'; bar.className = 'sensor-bar-fill';
+        status.textContent = currentLang === 'de' ? 'Futterstand: Gut' : 'Food level: Good';
+      }
+    }
+    if (document.getElementById('endSwitchEnabled').checked) {
+      let currentRot = parseInt(document.getElementById('endSwitchValue').textContent) || 0;
+      if (currentRot < 100) currentRot += 1;
+      document.getElementById('endSwitchValue').textContent = currentRot;
+    }
+  }
+  setInterval(simulateSensorUpdates, 3000);
+
+  function toggleMqttEnabled() {
+    const enabled = document.getElementById('mqttEnabled').checked;
+    document.getElementById('mqttConfigSection').style.opacity = enabled ? '1' : '0.4';
+    document.getElementById('mqttConfigSection').style.pointerEvents = enabled ? 'auto' : 'none';
+    renderMqttTopicsPreview();
+    if (enabled) showToast('success', 'MQTT aktiviert', 'MQTT-Integration wurde aktiviert');
+    else showToast('info', 'MQTT deaktiviert', 'MQTT-Integration wurde deaktiviert');
+  }
+
+  function renderMqttTopicsPreview() {
+    const prefix = document.getElementById('mqttPrefix').value || 'smart-feeder';
+    const topics = [
+      { name: `${prefix}/status/online`, dir: '→', desc: currentLang === 'de' ? 'Online-Status' : 'Online status' },
+      { name: `${prefix}/status/battery`, dir: '→', desc: currentLang === 'de' ? 'Akku-Level (%)' : 'Battery level (%)' },
+      { name: `${prefix}/sensor/food_level`, dir: '→', desc: currentLang === 'de' ? 'Futterstand (%)' : 'Food level (%)' },
+      { name: `${prefix}/sensor/rotations`, dir: '→', desc: currentLang === 'de' ? 'Umdrehungszähler' : 'Rotation counter' },
+      { name: `${prefix}/control/feed_now`, dir: '←', desc: currentLang === 'de' ? 'Manuelle Fütterung auslösen' : 'Trigger manual feeding' },
+      { name: `${prefix}/control/reset_sensors`, dir: '←', desc: currentLang === 'de' ? 'Sensoren resetten' : 'Reset sensors' },
+      { name: `${prefix}/schedule/slot_1/active`, dir: '', desc: currentLang === 'de' ? 'Slot 1 aktiv' : 'Slot 1 active' },
+      { name: `${prefix}/events/last`, dir: '→', desc: currentLang === 'de' ? 'Letztes Event (JSON)' : 'Last event (JSON)' }
+    ];
+    const preview = document.getElementById('mqttTopicsPreview');
+    preview.innerHTML = topics.map(t => `<div class="topic-line"><span class="topic-name">${t.name}</span><span class="topic-dir">${t.dir} ${t.desc}</span></div>`).join('');
+  }
+
+  function saveMqttConfig() { showToast('success', 'Gespeichert', translations[currentLang].mqtt_save_success); }
+  function testMqttConnection() { if (Math.random() > 0.2) showToast('success', 'Verbindung erfolgreich', translations[currentLang].mqtt_test_success); else showToast('error', 'Verbindung fehlgeschlagen', translations[currentLang].mqtt_test_failed); }
+  function publishHaDiscovery() { showToast('success', 'Discovery gesendet', translations[currentLang].mqtt_discovery_sent); }
+  document.getElementById('mqttPrefix').addEventListener('input', renderMqttTopicsPreview);
+
+  function exportSettings() {
+    const exportData = {
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      settings: {
+        schedule: localStorage.getItem('schedule'),
+        logConfig: localStorage.getItem('logConfig'),
+        notifyConfig: localStorage.getItem('notifyConfig'),
+        logRetention: localStorage.getItem('logRetention'),
+        lang: localStorage.getItem('lang'),
+        theme: localStorage.getItem('theme'),
+        totpEnabled: localStorage.getItem('totpEnabled'),
+        wifiPassword: document.getElementById('wifiPassword').value,
+        smtpServer: document.getElementById('smtpServer').value,
+        smtpPort: document.getElementById('smtpPort').value,
+        smtpUser: document.getElementById('smtpUser').value,
+        smtpPassword: document.getElementById('smtpPassword').value,
+        smtpEncryption: document.getElementById('smtpEncryption').value,
+        smtpFrom: document.getElementById('smtpFrom').value,
+        emailAddr: document.getElementById('emailAddr').value,
+        discordUrl: document.getElementById('discordUrl').value,
+        pushoverToken: document.getElementById('pushoverToken').value,
+        pushoverUser: document.getElementById('pushoverUser').value,
+        telegramToken: document.getElementById('telegramToken').value,
+        telegramChat: document.getElementById('telegramChat').value,
+        newPassword: document.getElementById('newPassword').value,
+        totpSecret: document.getElementById('totpSecret').value,
+        mqttEnabled: document.getElementById('mqttEnabled').checked,
+        mqttServer: document.getElementById('mqttServer').value,
+        mqttPort: document.getElementById('mqttPort').value,
+        mqttPrefix: document.getElementById('mqttPrefix').value,
+        mqttUser: document.getElementById('mqttUser').value,
+        mqttPassword: document.getElementById('mqttPassword').value,
+        mqttTls: document.getElementById('mqttTls').checked,
+        haDiscovery: document.getElementById('haDiscovery').checked,
+        motorType: document.getElementById('motorType').value,
+        motorVoltage: document.getElementById('motorVoltage').value,
+        motorCurrent: document.getElementById('motorCurrent').value,
+        motorDriver: document.getElementById('motorDriver').value,
+        calibTime: document.getElementById('calibTime').value,
+        calibWeight: document.getElementById('calibWeight').value,
+        syncType: document.getElementById('syncType').value,
+        syncInterval: document.getElementById('syncInterval').value,
+        updateSource: document.getElementById('updateSource').value,
+        customRepoUrl: document.getElementById('customRepoUrl').value,
+        autoUpdateCheck: document.getElementById('autoUpdateCheck').checked,
+        updateInterval: document.getElementById('updateInterval').value,
+        updateNotify: document.getElementById('updateNotify').checked,
+        autoInstall: document.getElementById('autoInstall').checked,
+        lightBarrierEnabled: document.getElementById('lightBarrierEnabled').checked,
+        lightBarrierThreshold: document.getElementById('lightBarrierThreshold').value,
+        lightBarrierNotify: document.getElementById('lightBarrierNotify').checked,
+        lightBarrierLedSwitch: document.getElementById('lightBarrierLedSwitch').checked,
+        endSwitchEnabled: document.getElementById('endSwitchEnabled').checked,
+        rotationsPerPortion: document.getElementById('rotationsPerPortion').value,
+        maxRotations: document.getElementById('maxRotations').value,
+        endSwitchNotify: document.getElementById('endSwitchNotify').checked
+      }
+    };
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `smart-feeder-backup-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast('success', 'Export erfolgreich', translations[currentLang].export_success);
+  }
+
+  function importSettings(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!confirm(translations[currentLang].import_confirm)) { event.target.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const importData = JSON.parse(e.target.result);
+        if (!importData.settings) throw new Error('Invalid backup file');
+        const localStorageKeys = ['lang', 'theme', 'schedule', 'logConfig', 'notifyConfig', 'logRetention', 'totpEnabled'];
+        Object.keys(importData.settings).forEach(key => { if (localStorageKeys.includes(key) && importData.settings[key] !== null) localStorage.setItem(key, importData.settings[key]); });
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) { if (el.type === 'checkbox') el.checked = val === true || val === 'true'; else el.value = val; } };
+        setVal('wifiPassword', importData.settings.wifiPassword);
+        setVal('smtpServer', importData.settings.smtpServer); setVal('smtpPort', importData.settings.smtpPort); setVal('smtpUser', importData.settings.smtpUser);
+        setVal('smtpPassword', importData.settings.smtpPassword); setVal('smtpEncryption', importData.settings.smtpEncryption); setVal('smtpFrom', importData.settings.smtpFrom);
+        setVal('emailAddr', importData.settings.emailAddr); setVal('discordUrl', importData.settings.discordUrl);
+        setVal('pushoverToken', importData.settings.pushoverToken); setVal('pushoverUser', importData.settings.pushoverUser);
+        setVal('telegramToken', importData.settings.telegramToken); setVal('telegramChat', importData.settings.telegramChat);
+        setVal('newPassword', importData.settings.newPassword); setVal('totpSecret', importData.settings.totpSecret);
+        if (importData.settings.totpEnabled === 'true' || importData.settings.totpEnabled === true) { document.getElementById('enableTOTP').checked = true; document.getElementById('totpSetup').style.display = 'block'; }
+        setVal('mqttEnabled', importData.settings.mqttEnabled); setVal('mqttServer', importData.settings.mqttServer); setVal('mqttPort', importData.settings.mqttPort);
+        setVal('mqttPrefix', importData.settings.mqttPrefix); setVal('mqttUser', importData.settings.mqttUser); setVal('mqttPassword', importData.settings.mqttPassword);
+        setVal('mqttTls', importData.settings.mqttTls); setVal('haDiscovery', importData.settings.haDiscovery); toggleMqttEnabled();
+        setVal('motorType', importData.settings.motorType); setVal('motorVoltage', importData.settings.motorVoltage); setVal('motorCurrent', importData.settings.motorCurrent); setVal('motorDriver', importData.settings.motorDriver);
+        setVal('calibTime', importData.settings.calibTime); setVal('calibWeight', importData.settings.calibWeight); updateMotorConfig(); calculateCalibration();
+        setVal('syncType', importData.settings.syncType); setVal('syncInterval', importData.settings.syncInterval);
+        setVal('updateSource', importData.settings.updateSource); setVal('customRepoUrl', importData.settings.customRepoUrl);
+        setVal('autoUpdateCheck', importData.settings.autoUpdateCheck); setVal('updateInterval', importData.settings.updateInterval);
+        setVal('updateNotify', importData.settings.updateNotify); setVal('autoInstall', importData.settings.autoInstall);
+        updateSourceChanged(); toggleAutoUpdateConfig();
+        setVal('lightBarrierEnabled', importData.settings.lightBarrierEnabled); setVal('lightBarrierThreshold', importData.settings.lightBarrierThreshold);
+        setVal('lightBarrierNotify', importData.settings.lightBarrierNotify); setVal('lightBarrierLedSwitch', importData.settings.lightBarrierLedSwitch); toggleLightBarrier();
+        setVal('endSwitchEnabled', importData.settings.endSwitchEnabled); setVal('rotationsPerPortion', importData.settings.rotationsPerPortion);
+        setVal('maxRotations', importData.settings.maxRotations); setVal('endSwitchNotify', importData.settings.endSwitchNotify); toggleEndSwitch();
+        currentLang = importData.settings.lang || 'de'; currentTheme = importData.settings.theme || 'light';
+        applyTheme(); applyTranslations(); renderSchedule(); renderEventConfig(); renderLogs(); renderRecentEvents();
+        showToast('success', 'Import erfolgreich', translations[currentLang].import_success);
+        setTimeout(() => location.reload(), 1500);
+      } catch (err) { showToast('error', 'Import fehlgeschlagen', translations[currentLang].import_error); console.error(err); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  // === INIT ===
+  applyTheme();
+  applyTranslations();
+  renderSchedule();
+  renderEventConfig();
+  renderLogs();
+  renderRecentEvents();
+  renderMqttTopicsPreview();
+  calculateCalibration();
+  updateSourceChanged();
+  toggleAutoUpdateConfig();
+  toggleLightBarrier();
+  toggleEndSwitch();
+  populateTimezones();
+</script>
+</body>
+</html>

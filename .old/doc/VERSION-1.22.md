@@ -1,0 +1,3 @@
+# FeedMate v1.22
+
+v1.22 startet das Setup-WLAN unmittelbar nach dem sicheren Abschalten des Motors und vor allen weiteren Initialisierungsschritten. Nach erfolgreichem Start erhält es zwei Sekunden Beacon-Zeit, bevor die Initialisierung fortgesetzt wird. Damit können LittleFS-, Authentifizierungs-, RTC-, Sensor- oder Webserverprobleme das AP nicht mehr unbemerkt verhindern. Bei gespeicherten WLAN-Daten bleibt der AP bis zur erfolgreichen Verbindung erhalten; anschließend wird es abgeschaltet. Die globale USB-CDC-Umschaltung aus v1.21 wurde entfernt. Kennwörter bleiben `feedmate` und `FeedMateAdmin`, die Demo bleibt bei `admin`.
