@@ -7,6 +7,8 @@
 [![PlatformIO](https://img.shields.io/badge/PlatformIO-ESP32%20%7C%20ESP8266-orange?style=flat&labelColor=555555)](code/platformio.ini)
 [![Demo](https://img.shields.io/badge/Interactive-Demo-42c44a?style=flat&labelColor=555555)](https://tuefteltyp.github.io/demo/feedmate.html)
 
+[Deutsch](#deutsch) | [English](#english)
+
 <a id="deutsch"></a>
 ## Deutsch
 
