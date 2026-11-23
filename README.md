@@ -1,7 +1,6 @@
 # FeedMate
 
 **Make feeding your pet smart.**  
-**Füttere dein Haustier smart.**
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC--BY--NC--SA--4.0-c38041?style=flat&labelColor=555555)](LICENSE)
 [![PlatformIO](https://img.shields.io/badge/PlatformIO-ESP32%20%7C%20ESP8266-orange?style=flat&labelColor=555555)](code/platformio.ini)
