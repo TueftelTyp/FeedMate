@@ -37,6 +37,18 @@ inline bool due(bool active, unsigned hour, unsigned minute, unsigned second, ui
 inline unsigned oldest(unsigned next, unsigned count, unsigned capacity) {
     return (next + capacity - count) % capacity;
 }
+inline bool sameScheduleIdentity(unsigned hourA,unsigned minuteA,unsigned secondA,
+                                 unsigned durationA,const char* foodA,float gramsA,
+                                 unsigned hourB,unsigned minuteB,unsigned secondB,
+                                 unsigned durationB,const char* foodB,float gramsB) {
+    return hourA==hourB && minuteA==minuteB && secondA==secondB &&
+        durationA==durationB && strcmp(foodA,foodB)==0 &&
+        (!foodA[0] || gramsA==gramsB);
+}
+inline bool sameScheduleTime(unsigned hourA,unsigned minuteA,unsigned secondA,
+                             unsigned hourB,unsigned minuteB,unsigned secondB) {
+    return hourA==hourB && minuteA==minuteB && secondA==secondB;
+}
 inline bool expired(uint32_t now, uint32_t start, uint32_t duration) {
     return uint32_t(now - start) >= duration;
 }

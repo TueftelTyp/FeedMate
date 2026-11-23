@@ -10,6 +10,7 @@ einer angepassten PlatformIO-Board-ID und Pinbelegung eingebunden.
 
 | Ziel | Referenzboard | Upload-Beispiel |
 |---|---|---|
+| `esp32c3_supermini` | ESP32-C3 SuperMini-kompatibles Profil (Standard) | `pio run -t upload` |
 | `esp32dev` | ESP32 DevKit / WROOM | `pio run -e esp32dev -t upload` |
 | `esp32c3` | ESP32-C3-DevKitM-1 | `pio run -e esp32c3 -t upload` |
 | `esp32c6` | ESP32-C6-DevKitC-1 | `pio run -e esp32c6 -t upload` |

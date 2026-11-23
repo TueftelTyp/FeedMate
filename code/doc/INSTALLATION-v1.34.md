@@ -1,4 +1,4 @@
-# FeedMate v1.24 installieren
+# FeedMate v1.34 installieren
 
 ## Zugangsdaten
 
@@ -16,21 +16,23 @@ Beim geprüften Gerät mit der von esptool angezeigten MAC-Adresse
 Im entpackten Projektordner ausführen; `COM6` bei Bedarf ersetzen:
 
 ```powershell
-pio run -e esp32c3 -t clean
-pio run -e esp32c3 -t erase --upload-port COM6
-pio run -e esp32c3 -t upload --upload-port COM6
-pio run -e esp32c3 -t uploadfs --upload-port COM6
+pio run -e esp32c3_supermini -t clean
+pio run -e esp32c3_supermini -t erase --upload-port COM6
+pio run -e esp32c3_supermini -t upload --upload-port COM6
+pio run -e esp32c3_supermini -t uploadfs --upload-port COM6
 pio device monitor -b 115200 --port COM6
 ```
 
 Nach dem Firmware-Upload kann Windows der nativen USB-Schnittstelle eine neue
 COM-Nummer geben. In diesem Fall den neu erschienenen Port verwenden.
 
-Im Monitor muss eine Zeile in dieser Form erscheinen:
+Das Setup-WLAN startet nach dem Laden der Konfiguration und vor RTC/Webserver. Im Monitor sollte eine Zeile in dieser Form erscheinen:
 
 ```text
 Management AP started: FeedMate-44bd8d5e19e8 Password: feedmate Channel: 1 IP: 192.168.4.1 mode=2
 ```
+
+Das Heim-WLAN wird erst verbunden, wenn kein Smartphone mehr mit dem Setup-AP verbunden ist. Damit bleibt der Einrichtungszugang während der Bedienung stabil.
 
 Anschließend das Smartphone mit dieser SSID verbinden, eine Warnung über ein
 Netz ohne Internet bestätigen und `http://192.168.4.1` ausdrücklich im Browser
@@ -60,3 +62,17 @@ Unbekannte Freitextwerte werden von Firmware und API abgelehnt.
 
 `demo.html` direkt im Browser öffnen und mit `admin` anmelden. Die Demo steuert
 keine Hardware. Nur dort können erfundene Automaten hinzugefügt werden.
+
+## Verwaltungs-WLAN-Verbindung bricht ab
+
+v1.34 schaltet das WLAN nach dem AP-Start nicht mehr aus. Die Heimnetzverbindung beginnt erst, wenn das Smartphone den Setup-AP verlassen hat. Bleibt die Verbindung dennoch instabil, sichere im seriellen Monitor (115200 Baud) die Zeilen zu `Management AP`, `Starting saved Wi-Fi connection`, `Clients` und Neustarts.
+
+## Verwaltungs-WLAN wird nicht gefunden
+
+Die serielle Meldung `Management AP active` bestätigt nur, dass der WLAN-Treiber
+AP-Modus, IP und SSID meldet. Sie bestätigt keine Funkabstrahlung. Wenn kein
+Gerät die SSID sieht, teste das ESP32-C3-Board zunächst nur über USB, ohne
+Motor/Motortreiber oder weitere externe Verdrahtung. Suche aus unmittelbarer
+Nähe zusätzlich mit einem zweiten 2,4-GHz-fähigen Gerät. Bleibt der AP unsichtbar,
+Boardmodell und Antennenausführung prüfen; erneutes Löschen und Flashen ist dann
+kein aussagekräftiger Funknachweis.

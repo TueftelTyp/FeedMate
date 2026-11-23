@@ -17,6 +17,7 @@ static uint32_t lastRecoveryAttempt=0;
 static void error(int status,const char* message);
 static bool body(JsonDocument& doc);
 static uint32_t sessionStart=0,lastLoginAttempt=0;
+static uint32_t deferredRestartAt=0;
 static bool attemptedLogin=false;
 String randomHex(size_t bytes) {
     String out; out.reserve(bytes*2);
@@ -71,7 +72,7 @@ static void recover() {
     StaticJsonDocument<512> doc;
     if(!body(doc)) return;
     if(!doc["code"].is<const char*>() || !doc["newPassword"].is<const char*>() ||
-       strlen(doc["newPassword"])<16 || strlen(doc["newPassword"])>128) { error(400,"Invalid recovery request"); return; }
+       strlen(doc["newPassword"])<10 || strlen(doc["newPassword"])>128) { error(400,"Invalid recovery request: password must be 10..128 characters"); return; }
     if(!same(doc["code"].as<String>(),recoveryCode)) { ++recoveryFailures; error(401,"Invalid recovery code"); return; }
     char previous[sizeof(config.adminPassword)];
     strlcpy(previous,config.adminPassword,sizeof(previous));
@@ -105,7 +106,7 @@ static bool corsAllowed() {
             !logic::headerHasToken(requestedHeaders.c_str(),"authorization");
     }
     const String key=webServer.header("X-FeedMate-Key");
-    return key.length()>=16 && config.fleetKeyHash[0] &&
+    return key.length()>=4 && config.fleetKeyHash[0] &&
         same(fleetHash(key),String(config.fleetKeyHash));
 }
 static void cors() {
@@ -122,7 +123,7 @@ static bool auth() {
     cors(); webServer.sendHeader("Cache-Control","no-store");
     bool session=logic::sessionValid(sessionToken.c_str(),webServer.header("Authorization").c_str(),millis(),sessionStart);
     String fleetKey=webServer.header("X-FeedMate-Key");
-    bool fleet=config.fleetKeyHash[0] && fleetKey.length()>=16 && same(fleetHash(fleetKey),config.fleetKeyHash);
+    bool fleet=config.fleetKeyHash[0] && fleetKey.length()>=4 && same(fleetHash(fleetKey),config.fleetKeyHash);
     if(!session && !fleet) { error(401,"Unauthorized"); return false; }
     return true;
 }
@@ -168,7 +169,8 @@ static void feed() {
     if(!auth()) return;
     StaticJsonDocument<256> doc; if(!body(doc)) return;
     if(!doc["duration"].is<long>() || !logic::durationValid(doc["duration"].as<long>())) { error(400,"Duration must be 1..30000 ms"); return; }
-    if(!requestMotor(doc["duration"].as<uint16_t>())) { error(409,"Motor busy, fault or storage unavailable"); return; }
+    // This endpoint is duration-based. Hall pulses still guard jam and max turns.
+    if(!requestMotor(doc["duration"].as<uint16_t>(),0)) { error(409,"Motor busy, fault or storage unavailable"); return; }
     webServer.send(202,"application/json","{\"status\":\"queued\"}");
 }
 static void getSchedule() {
@@ -203,7 +205,38 @@ static void postSchedule() {
             uint16_t duration;uint8_t target;
             if(!estimateFood(proposed[i].foodName,proposed[i].portionGrams,duration,target)) {error(400,"Scheduled portion cannot be delivered");return;}
         }
-        proposed[i].lastRunDate=schedule[i].lastRunDate;
+    }
+    // Keep at-most-once reservations attached to a slot when the shared plan is reordered.
+    bool matched[MAX_SCHEDULE_ENTRIES]{},assigned[MAX_SCHEDULE_ENTRIES]{};
+    for(size_t i=0;i<doc["slots"].size();i++) {
+        for(size_t j=0;j<MAX_SCHEDULE_ENTRIES;j++) {
+            if(matched[j]) continue;
+            const auto& old=schedule[j];
+            const auto& next=proposed[i];
+            if(logic::sameScheduleIdentity(next.hour,next.minute,next.second,next.durationMs,
+                   next.foodName,next.portionGrams,old.hour,old.minute,old.second,
+                   old.durationMs,old.foodName,old.portionGrams)) {
+                proposed[i].lastRunDate=old.lastRunDate;
+                matched[j]=true; assigned[i]=true;
+                break;
+            }
+        }
+    }
+    // Editing a portion or food at the same daily time still edits that slot;
+    // keep its reservation so saving cannot cause a second same-day feeding.
+    for(size_t i=0;i<doc["slots"].size();i++) {
+        if(assigned[i]) continue;
+        for(size_t j=0;j<MAX_SCHEDULE_ENTRIES;j++) {
+            if(matched[j]) continue;
+            const auto& old=schedule[j];
+            const auto& next=proposed[i];
+            if(logic::sameScheduleTime(next.hour,next.minute,next.second,
+                                       old.hour,old.minute,old.second)) {
+                proposed[i].lastRunDate=old.lastRunDate;
+                matched[j]=true;
+                break;
+            }
+        }
     }
     FeedingSlot previous[MAX_SCHEDULE_ENTRIES]; memcpy(previous,schedule,sizeof(schedule)); memcpy(schedule,proposed,sizeof(schedule));
     if(!saveSchedule()) { memcpy(schedule,previous,sizeof(schedule)); error(503,"Schedule commit failed"); return; }
@@ -237,21 +270,38 @@ static void postConfig() {
     proposed.rotationsPerPortion=number("rotationsPerPortion",1,255,proposed.rotationsPerPortion); proposed.maxRotations=number("maxRotations",1,255,proposed.maxRotations);
     auto flag=[&](const char* key,bool& dest) { if(doc.containsKey(key)) { if(!doc[key].is<bool>()) valid=false; else dest=doc[key].as<bool>(); } };
     flag("mqttEnabled",proposed.mqttEnabled); flag("haDiscovery",proposed.haDiscovery); flag("lightBarrierEnabled",proposed.lightBarrierEnabled); flag("endSwitchEnabled",proposed.endSwitchEnabled);
-    if(proposed.rotationsPerPortion>proposed.maxRotations || !timezoneSupported(proposed.timezone) || !proposed.mqttPrefix[0] || strpbrk(proposed.mqttPrefix,"+# ") || (proposed.mqttEnabled && !proposed.mqttServer[0])) valid=false;
+    if((doc.containsKey("rotationsPerPortion") || doc.containsKey("maxRotations")) && proposed.rotationsPerPortion>proposed.maxRotations) { error(400,"Umdrehungen pro Portion dürfen die maximalen Umdrehungen nicht überschreiten"); return; }
+    if(doc.containsKey("timezone") && !timezoneSupported(proposed.timezone)) { error(400,"Ungültige Zeitzone; bitte einen Eintrag aus der Liste wählen"); return; }
+    if(doc.containsKey("mqttPrefix") && (!proposed.mqttPrefix[0] || strpbrk(proposed.mqttPrefix,"+# "))) { error(400,"Ungültiges MQTT-Topic-Präfix; Leerzeichen, + und # sind nicht erlaubt"); return; }
+    if((doc.containsKey("mqttEnabled") || doc.containsKey("mqttServer")) && proposed.mqttEnabled && !proposed.mqttServer[0]) { error(400,"MQTT ist aktiviert, aber der Broker ist leer"); return; }
     if(doc.containsKey("adminPassword")) {
-        if(!doc["adminPassword"].is<const char*>() || strlen(doc["adminPassword"])<16 || strlen(doc["adminPassword"])>128) valid=false;
+        if(!doc["adminPassword"].is<const char*>() || strlen(doc["adminPassword"])<10 || strlen(doc["adminPassword"])>128) { error(400,"Admin-Passwort muss 10 bis 128 Zeichen lang sein"); return; }
         else strlcpy(proposed.adminPassword,passwordHash(doc["adminPassword"].as<String>()).c_str(),sizeof(proposed.adminPassword));
     }
     if(doc.containsKey("fleetKey")) {
-        if(!doc["fleetKey"].is<const char*>() || strlen(doc["fleetKey"])<16 || strlen(doc["fleetKey"])>128) valid=false;
+        if(!doc["fleetKey"].is<const char*>() || strlen(doc["fleetKey"])<4 || strlen(doc["fleetKey"])>128) { error(400,"Gruppenschlüssel muss 4 bis 128 Zeichen lang sein"); return; }
         else strlcpy(proposed.fleetKeyHash,fleetHash(doc["fleetKey"].as<String>()).c_str(),sizeof(proposed.fleetKeyHash));
     }
     if(!valid) { error(400,"Invalid configuration"); return; }
+    bool restartAfterSave=false;
+    if(doc.containsKey("restart")) {
+        if(!doc["restart"].is<bool>()) { error(400,"Restart must be true or false"); return; }
+        restartAfterSave=doc["restart"].as<bool>();
+    }
     std::unique_ptr<FeedMateConfig> previous(new FeedMateConfig(config)); config=proposed;
     if(!saveConfig()) { config=*previous; error(503,"Config commit failed"); return; }
     if(doc.containsKey("adminPassword")) sessionToken="";
-    // Network changes require an explicit restart after response delivery.
-    webServer.send(200,"application/json","{\"status\":\"saved; restart device to apply network and timezone settings\"}");
+    if(restartAfterSave) deferredRestartAt=millis()+1500;
+    webServer.send(200,"application/json",restartAfterSave?
+        "{\"status\":\"saved; device restarting\"}":"{\"status\":\"saved; restart later to apply network or timezone changes\"}");
+}
+void serviceDeferredRestart() {
+    if(deferredRestartAt && int32_t(millis()-deferredRestartAt)>=0) {
+        deferredRestartAt=0;
+        Serial.println("Restarting after settings save");
+        delay(50);
+        ESP.restart();
+    }
 }
 static void logs() {
     if(!auth()) return;
@@ -342,7 +392,7 @@ static void feedPortion() {
 static void exportBackup() {
     if(!auth()) return;
     DynamicJsonDocument section(8192);
-    String backup=String("{\"format\":\"FeedMate-v1.24\",\"deviceId\":\"")+deviceId()+"\"";
+    String backup=String("{\"format\":\"FeedMate-v1.28\",\"deviceId\":\"")+deviceId()+"\"";
     for(const char* path:{CONFIG_FILE,SCHEDULE_FILE,FOODS_FILE}) {
         File file=LittleFS.open(path,"r");
         section.clear();

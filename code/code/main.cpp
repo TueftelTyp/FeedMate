@@ -16,6 +16,8 @@ String managementApSsid;
 bool managementApStarted=false;
 uint32_t managementApStarts=0,managementApFailures=0;
 static uint32_t lastFallbackAttempt=0;
+static bool stationConnectPending=false;
+static uint32_t stationConnectAfter=0;
 
 uint32_t utcNow() {
     time_t now=time(nullptr);
@@ -96,31 +98,33 @@ void setupWiFi() {
     while(hostname.endsWith("-")) hostname.remove(hostname.length()-1);
     if(!hostname.length()) hostname=WIFI_HOSTNAME;
 #if defined(ESP32)
-    // ESP32 accepts a station hostname only before its interface starts.
-    // Recreate WiFi once, deliberately and immediately restore the AP below.
-    WiFi.mode(WIFI_OFF);
-    delay(100);
+    // Arduino-ESP32 requires the hostname before the first Wi-Fi mode change.
     if(!WiFi.setHostname(hostname.c_str())) Serial.println("STA hostname rejected");
 #else
     WiFi.hostname(hostname.c_str());
 #endif
     WiFi.setAutoReconnect(true);
-    if(config.wifiSsid[0]) {
-        WiFi.mode(WIFI_AP_STA);
-        WiFi.begin(config.wifiSsid,config.wifiPassword);
-    } else {
-        WiFi.mode(WIFI_AP);
-    }
-    // WiFi.mode() and WiFi.begin() may recreate network interfaces. Reassert
-    // the smartphone management network after all station configuration.
+    // Keep the AP interface and its channel stable while a phone is using it.
+    // The saved home network is attempted only after setup clients leave.
+    stationConnectPending=config.wifiSsid[0]!=0;
+    stationConnectAfter=millis()+5000;
     startFallbackAP();
 }
 void startFallbackAP() {
     lastFallbackAttempt=millis();
     managementApSsid=String("FeedMate-")+deviceId();
-    WiFi.mode(config.wifiSsid[0] ? WIFI_AP_STA : WIFI_AP);
+    const auto currentMode=WiFi.getMode();
+    const bool alreadyActive=(currentMode==WIFI_AP || currentMode==WIFI_AP_STA) &&
+        WiFi.softAPIP()!=IPAddress(0,0,0,0) && WiFi.softAPSSID()==managementApSsid;
+    if(alreadyActive) { managementApStarted=true; return; }
+    // Use AP-only mode when no router is configured. Keep AP+STA when saved
+    // credentials exist; never stop Wi-Fi during AP recovery.
+    const auto desiredMode=config.wifiSsid[0]?WIFI_AP_STA:WIFI_AP;
+    if(currentMode!=desiredMode) WiFi.mode(desiredMode);
 #if defined(ESP32)
     WiFi.setSleep(false);
+    if(!WiFi.setTxPower(WIFI_POWER_17dBm))
+        Serial.println("Management AP TX power configuration failed");
 #endif
     delay(100);
     const IPAddress local(192,168,4,1),gateway(192,168,4,1),mask(255,255,255,0);
@@ -133,10 +137,17 @@ void startFallbackAP() {
         WiFi.softAPIP()!=IPAddress(0,0,0,0) &&
         WiFi.softAPSSID()==managementApSsid;
     if(managementApStarted) ++managementApStarts; else ++managementApFailures;
-    Serial.printf("Management AP %s: %s Password: %s Channel: 1 IP: %s mode=%u\n",
+    Serial.printf("Management AP %s: %s Password: %s Channel: %u IP: %s mode=%u\n",
                   managementApStarted?"started":"FAILED",managementApSsid.c_str(),
-                  INITIAL_AP_PASSWORD,WiFi.softAPIP().toString().c_str(),unsigned(mode));
+                  INITIAL_AP_PASSWORD,unsigned(WiFi.channel()),WiFi.softAPIP().toString().c_str(),unsigned(mode));
     if(!configured) Serial.println("Management AP address was already configured or could not be changed");
+}
+static void serviceStationConnection() {
+    if(!stationConnectPending || int32_t(millis()-stationConnectAfter)<0) return;
+    if(WiFi.softAPgetStationNum()!=0) return;
+    stationConnectPending=false;
+    Serial.printf("Starting saved Wi-Fi connection: %s\n",config.wifiSsid);
+    WiFi.begin(config.wifiSsid,config.wifiPassword);
 }
 void serviceManagementAP() {
     static uint32_t lastCheck=0,lastReport=0;
@@ -168,10 +179,6 @@ void checkPowerStatus() {
 void setup() {
     digitalWrite(PIN_MOTOR_GATE,LOW); pinMode(PIN_MOTOR_GATE,OUTPUT);
     Serial.begin(115200);
-    // Make smartphone setup available before storage, authentication, RTC,
-    // sensors or web-server initialization can fail.
-    startFallbackAP();
-    delay(1750); // Complete two seconds of beacon time before later services.
 #if defined(ESP32)
     analogReadResolution(10); // Shared raw ADC thresholds; calibrate actual divider.
     analogSetPinAttenuation(PIN_POWER_SENSE,ADC_11db);
@@ -180,7 +187,12 @@ void setup() {
     pinMode(PIN_HALL_SENSOR,INPUT); pinMode(PIN_MANUAL_BUTTON,INPUT_PULLUP);
     setupStatusLed();
     setupLittleFS(); loadConfig(); loadSchedule(); loadLogFromFile();
-    bootNonce=randomHex(16); setupAuth(); setupWiFi(); setupRTC(); setupWebServer(); setupMQTT();
+    bootNonce=randomHex(16); setupAuth();
+    // Set the configured hostname before starting Wi-Fi; start the setup AP
+    // before RTC, web-server and MQTT setup, without a later WIFI_OFF cycle.
+    setupWiFi();
+    delay(1750); // Give the AP time to emit beacons before the first loop pass.
+    setupRTC(); setupWebServer(); setupMQTT();
     addLogEntry(EVT_BOOT,"Boot; interrupted feeds are never resumed");
 }
 void loop() {
@@ -189,9 +201,11 @@ void loop() {
     if(motorRunning) { platformIdle(); return; }
     serviceClock();
     serviceManagementAP();
+    serviceStationConnection();
     if(millis()-lastScheduleCheck>=200) { lastScheduleCheck=millis(); checkSchedule(); }
     if(motorRunning) return;
     webServer.handleClient();
+    serviceDeferredRestart();
     serviceMotorRequest();
     if(motorRunning) return;
     serviceMQTT();

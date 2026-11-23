@@ -1,5 +1,50 @@
 # FeedMate – ESP32-/ESP8266-Firmware
 
+## v1.34: Gruppenschlüssel ab 4 Zeichen
+
+Bei Änderungen an WLAN, Hostname oder Zeitzone fragt die Oberfläche, ob nach
+dem Speichern neu gestartet werden soll. Andere Einstellungen benötigen keinen
+Neustart. Admin-Passwörter haben mindestens 10, Gruppenschlüssel mindestens 4
+Zeichen.
+
+## v1.32: Gruppenschlüssel mit vier Zeichen
+
+PlatformIO baut standardmäßig das Profil `esp32c3_supermini`. Für ESP32 wird
+die AP-Sendeleistung auf einen konservativen, expliziten Wert gesetzt und ein
+Fehler dabei seriell gemeldet. Das bestätigt weiterhin nicht den RF-Empfang.
+
+Das Formular überträgt nur geänderte Einstellungen. Die Firmware validiert MQTT-, Zeitzonen- und Portionswerte nur, wenn der jeweilige Block geändert wurde.
+
+Der manuelle Taster quittiert einen Motorfehler per kurzem Druck, sofern der Jam-Eingang nicht mehr aktiv ist. Bei weiterhin aktivem Fehler bleibt die Quittierung gesperrt.
+
+Gruppenschlüssel akzeptieren jetzt mindestens 4 Zeichen. Kürzere Schlüssel sind einfacher zu teilen, aber leichter zu erraten; nur in einem vertrauenswürdigen lokalen Netz verwenden.
+
+Änderungen an WLAN, Hostname oder Zeitzone fragen beim Speichern, ob sofort neu gestartet werden soll. Bei „Nein“ werden die Werte gespeichert und beim späteren Neustart angewendet.
+
+## v1.31: Admin-Passwort und Motorfehler per Taste
+
+Der ESP32-Hostname wird vor jedem `WiFi.mode()` gesetzt, wie es die Arduino-
+ESP32-API verlangt. Ohne gespeichertes Heimnetz startet das Gerät im reinen
+AP-Modus; AP+STA wird nur mit konfigurierten Router-Zugangsdaten verwendet.
+Die Routerverbindung wartet weiterhin, bis Setup-Clients getrennt sind.
+
+## v1.26: stabiles Setup-WLAN beim Heimnetzstart
+
+Das Verwaltungs-AP wird ohne nachträgliches Ausschalten des WLANs gestartet.
+Hostname und WLAN-Modus werden vor dem AP-Start gesetzt; das gespeicherte
+Heimnetz wird erst verbunden, wenn kein Smartphone mehr am Setup-AP angemeldet
+ist. Die AP-Überwachung startet einen bereits intakten Zugangspunkt nicht erneut.
+
+## v1.25: zuverlässigere Kalibrierung und Gruppenzeitpläne
+
+Probeläufe sind jetzt tatsächlich laufzeitgesteuert, auch wenn ein Hall-Sensor
+aktiviert ist; der Hall-Sensor bleibt währenddessen für Fehler und Grenzwerte
+überwacht. Ein Probelauf meldet Abbrüche statt sie als Erfolg darzustellen.
+Gruppenzeitpläne übertragen auch leere Zeitlisten, sodass entfernte Automaten
+alte Fütterungen löschen. Reservierungen bleiben beim Sortieren an der gleichen
+Fütterungszeit erhalten. Die Übersicht zeigt den AP-Treiberstatus und Clients;
+das ist ausdrücklich kein Nachweis einer tatsächlichen Funkabstrahlung.
+
 ## v1.24: korrigierte AP-SSID und Selbstüberwachung
 
 Die Geräte-ID wird nun in derselben Byte-Reihenfolge wie die von esptool
@@ -17,11 +62,11 @@ POSIX-Regel. Das Verwaltungs-AP bleibt nun auch nach erfolgreicher Verbindung
 mit dem Heimnetz aktiv. Der Gerätename wird als Netzwerk-Hostname verwendet,
 ändert aber nicht die stabile AP-SSID `FeedMate-<Geräte-ID>`.
 
-## v1.22: Setup-AP startet vor der Initialisierung
+## v1.22: Setup-AP startet vor den Netzwerkdiensten
 
-Das Setup-WLAN verwendet beim Erststart das feste Kennwort `feedmate`; die Verwaltungsoberfläche verwendet initial `FeedMateAdmin`. Damit lässt sich FeedMate vollständig per Smartphone einrichten. Das Admin-Kennwort sollte nach der ersten Anmeldung in den Einstellungen durch ein persönliches Kennwort mit mindestens 16 Zeichen ersetzt werden. Der serielle Einmal-Wiederherstellungscode bleibt als Notfallweg erhalten.
+Das Setup-WLAN verwendet beim Erststart das feste Kennwort `feedmate`; die Verwaltungsoberfläche verwendet initial `FeedMateAdmin`. Damit lässt sich FeedMate vollständig per Smartphone einrichten. Das Admin-Kennwort sollte nach der ersten Anmeldung in den Einstellungen durch ein persönliches Kennwort mit mindestens 10 Zeichen ersetzt werden. Der serielle Einmal-Wiederherstellungscode bleibt als Notfallweg erhalten.
 
-Der Setup-AP startet unmittelbar nach dem sicheren Abschalten des Motors und damit vor LittleFS, Kennworthashing, Sensoren, RTC und Webserver. Ein Fehler in einer nachfolgenden Komponente kann das Smartphone-WLAN nicht mehr verhindern. Der AP-Start wird geprüft und bei einem Fehlschlag alle fünf Sekunden wiederholt.
+Das Setup-AP startet nach dem Laden der Konfiguration und vor RTC, Webserver und MQTT. Ein Fehler in diesen Netzwerkdiensten verhindert das Smartphone-WLAN nicht. Der AP-Start wird geprüft und bei einem Fehlschlag erneut versucht.
 
 ## v1.15: Bereinigtes Release-Paket
 
@@ -36,8 +81,8 @@ Das vollständige Release-ZIP enthält nur noch Dateien, die für die aktuelle V
 - Schutz vor doppelten Fütterungen nach Neustart, gemeinsame Motor-Zustandsverwaltung, RTC-/Netzwerkzeitsynchronisation, MQTT und dauerhafte Logs.
 - Eigenständige [Demo](demo.html) mit Kennwort **admin**; simulierte Automaten existieren ausschließlich in der Demo.
 - Fester Erstzugang für die Smartphone-Einrichtung: Setup-WLAN **feedmate**, Verwaltung **FeedMateAdmin**.
-- Sehr früher, geprüfter und bei Bedarf wiederholter Setup-AP-Start.
-- Vollständige [Installationsanleitung v1.24](doc/INSTALLATION-v1.24.md).
+- Geprüfter Setup-AP-Start vor RTC und Webserver; Heimnetzverbindung wartet auf getrennte Setup-Clients.
+- Vollständige [Installationsanleitung v1.27](doc/INSTALLATION-v1.27.md).
 
 FeedMate steuert einen Futterautomaten auf **ESP32, ESP32-C3/C6, ESP32-S2/S3** oder **WeMos D1 mini / ESP8266** mit DS3231, Motor-MOSFET und optionalen Sensoren. Diese Firmware verwendet Arduino-C++ und PlatformIO, kein ESPHome.
 
@@ -71,11 +116,11 @@ FeedMate steuert einen Futterautomaten auf **ESP32, ESP32-C3/C6, ESP32-S2/S3** o
 | tests/ | Tests der tatsächlichen Motor- und Zeitplanimplementierung mit simulierten Ein-/Ausgängen |
 | doc/CHANGES.md | Änderungen, API- und MQTT-Vertrag, bekannte Grenzen |
 | doc/TEST_REPORT.md | Ausgeführte Prüfungen und verbleibende Hardwaretests |
-| doc/INSTALLATION-v1.24.md | Vollständige aktuelle Installationsanleitung |
+| doc/INSTALLATION-v1.27.md | Vollständige aktuelle Installationsanleitung |
 
 ## Sicherheit und Betrieb
 
-Admin-Anmeldung verwendet einen gerätespezifisch gesalzenen SHA-256-Hash, zufällige 256-Bit-Sitzungstokens, 30 Minuten absolute Gültigkeit und eine Anmelderate von höchstens einem Versuch pro zwei Sekunden. Das feste Erstkennwort `FeedMateAdmin` muss nach der Einrichtung durch ein individuelles Kennwort mit mindestens 16 Zeichen ersetzt werden. Der Hash ist kein langsamer Passwort-KDF; schwache selbst gewählte Passwörter vermeiden. Bei vergessenem Passwort den **USB/Serial-Wiederherstellungscode** aus dem aktuellen Start in der Smartphone-Oberfläche eingeben. Er ist einmalig, auf fünf Fehlversuche pro Start begrenzt und wird nicht dauerhaft gespeichert.
+Admin-Anmeldung verwendet einen gerätespezifisch gesalzenen SHA-256-Hash, zufällige 256-Bit-Sitzungstokens, 30 Minuten absolute Gültigkeit und eine Anmelderate von höchstens einem Versuch pro zwei Sekunden. Das feste Erstkennwort `FeedMateAdmin` muss nach der Einrichtung durch ein individuelles Kennwort mit mindestens 10 Zeichen ersetzt werden. Der Hash ist kein langsamer Passwort-KDF; schwache selbst gewählte Passwörter vermeiden. Bei vergessenem Passwort den **USB/Serial-Wiederherstellungscode** aus dem aktuellen Start in der Smartphone-Oberfläche eingeben. Er ist einmalig, auf fünf Fehlversuche pro Start begrenzt und wird nicht dauerhaft gespeichert.
 
 HTTP und MQTT sind in diesem Stand **unverschlüsselt**. Nur in einem vertrauenswürdigen, abgeschotteten lokalen Netz betreiben; keine Internet-Portfreigabe. MQTT-Zugang über Broker-Anmeldung und Topic-ACLs schützen. API-Tokens werden nur im Arbeitsspeicher des Browsers gehalten. Cross-Origin-Zugriff ist für die Gruppenverwaltung nur mit dem gültigen Gruppenschlüssel freigegeben. Der bisherige OTA-Endpunkt mit festem Passwort wurde entfernt; Updates erfolgen per USB.
 

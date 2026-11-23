@@ -1,4 +1,72 @@
-# Änderungen vom 05.11.2026
+# Änderungen bis 23.11.2026
+
+## v1.34 – Gruppenschlüssel ab 4 Zeichen
+
+- Gruppenschlüssel akzeptieren 4 bis 128 Zeichen: beim Speichern, bei API-
+  Anmeldung und beim Koppeln von Geräten.
+- Neustartabfrage bei WLAN, Hostname und Zeitzone bleibt erhalten: „Ja“ speichert
+  und startet nach der Antwort; „Nein“ speichert ohne sofortigen Neustart.
+
+## v1.33 – Neustart nach Einstellungsänderung wählbar
+
+- Geänderte WLAN-Daten, Hostname oder Zeitzone lösen vor dem Speichern eine
+  Nachfrage aus. „Ja“ speichert und startet das Gerät nach der HTTP-Antwort neu;
+  „Nein“ speichert ohne Neustart.
+- Gruppenschlüssel werden wieder konsistent mit mindestens 16 Zeichen geprüft;
+  das Admin-Passwort bleibt bei mindestens 10 Zeichen.
+
+## v1.31 – Admin-Passwort ab 10 Zeichen
+
+- Neues Admin-Passwort und Wiederherstellung akzeptieren jetzt 10 bis 128
+  Zeichen. Gruppenschlüssel bleiben unabhängig davon bei mindestens 16 Zeichen.
+- Der manuelle Taster quittiert einen Motorfehler durch kurzen Druck, wenn der
+  Jam-Eingang inaktiv ist; bei aktivem Jam bleibt die Quittierung gesperrt.
+
+## v1.30 – Einstellungen selektiv speichern
+
+- Das Smartphone-Formular sendet nur geänderte Felder und neu eingegebene
+  Kennwörter; unveränderte Einstellungsblöcke werden ausgelassen.
+- Die Firmware prüft MQTT-Präfix/Broker und Portionsgrenzen nur, wenn der
+  jeweilige Block in der Anfrage geändert wurde. Ein ungültiger Altwert blockiert
+  damit nicht mehr das Speichern von Hostname oder Zeitzone.
+
+## v1.28 – C3 SuperMini Standardziel und Funkdiagnose
+
+- PlatformIO-Standardziel auf `esp32c3_supermini` gesetzt; es verwendet den
+  ESP32-C3-DevKitM-1 Toolchain-Eintrag und den FeedMate-C3-Pinplan.
+- ESP32-AP-Sendeleistung explizit auf 17 dBm begrenzt; ein Ablehnungsfehler
+  wird seriell gemeldet.
+- Das genaue SuperMini-Clone-Board und seine Antenne bleiben hardwareabhängig.
+
+## v1.27 – ESP32-WLAN korrekt vorinitialisiert
+
+- ESP32-Hostname wird vor `WiFi.mode()` gesetzt; keine unnötige WLAN-
+  Initialisierung oder Abschaltung davor.
+- Ohne Router-Zugangsdaten reiner AP-Modus; AP+STA nur, wenn Zugangsdaten
+  gespeichert sind. Die Heimnetzverbindung wartet weiterhin auf getrennte
+  Setup-Clients.
+
+## v1.26 – Verwaltungs-AP bleibt während der Einrichtung stabil
+
+- Den WLAN-Komplettstopp `WIFI_OFF` nach dem AP-Start entfernt; zuvor konnte
+  eine bereits verbundene Smartphone-Sitzung durch die spätere Neuinitialisierung
+  getrennt werden.
+- Konfiguration und Hostname werden vor Aktivierung der WLAN-Schnittstellen
+  geladen bzw. gesetzt. Das Setup-AP startet danach vor RTC, Webserver und MQTT.
+- AP+STA-Modus bleibt durchgehend aktiv; eine vorhandene AP-Verbindung wird bei
+  der AP-Prüfung nicht erneut gestartet.
+- Verbindung zum gespeicherten Heim-WLAN wird verzögert begonnen und wartet,
+  bis keine Setup-Clients mehr verbunden sind. So wird während der Smartphone-
+  Einrichtung kein Funkkanalwechsel durch die Stationsverbindung angestoßen.
+- AP-Startmeldungen zeigen den aktuell gemeldeten Funkkanal.
+
+## v1.25 – Kalibrierlauf und Gruppenzeitplan abgesichert
+
+- Zeitbasierte `POST /api/feed`-Läufe dauern die angeforderte Laufzeit auch bei aktiviertem Hall-Sensor. Hall-Impulse bleiben auf Jam und maximale Umdrehungen überwacht.
+- Der Kalibrierablauf wartet auf den tatsächlichen Motorabschluss und meldet Jam-, Speicher- oder Zeitüberschreitungsfehler.
+- Beim Speichern des gemeinsamen Zeitplans werden nun auch leere Zeitlisten an gekoppelte Automaten gesendet; entfernte alte Zeiten bleiben nicht mehr unbemerkt aktiv.
+- Tagesreservierungen von Zeitplänen werden beim Sortieren anhand der Fütterungsdaten zugeordnet statt anhand des Array-Indexes.
+- Neue Prüfungen für Laufzeitbetrieb mit Hall-Sensor und Zuordnung derselben Zeitplaneinträge.
 
 ## v1.23 – Zeitzonen-Dropdown und dauerhaftes Verwaltungs-AP
 

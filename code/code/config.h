@@ -208,6 +208,7 @@ uint32_t utcNow();
 const char* timezoneRule(const char* zone);
 bool timezoneSupported(const char* zone);
 void setupWebServer();
+void serviceDeferredRestart();
 void setupAuth();
 String randomHex(size_t bytes);
 void setupMQTT();

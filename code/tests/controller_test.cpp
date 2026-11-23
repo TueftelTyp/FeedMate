@@ -62,7 +62,7 @@ static void reset(){
     std::fill(std::begin(pins),std::end(pins),0);pins[PIN_MANUAL_BUTTON]=HIGH;
     motorRunning=jamActive=logsDirty=false;storageReady=clockValid=commitOk=logOk=profileOk=true;
     config.endSwitchEnabled=false;config.lightBarrierEnabled=false;config.rotationsPerPortion=10;config.maxRotations=50;
-    pendingDuration=0;nowMs=1000;events.clear();commits=0;std::fill(std::begin(schedule),std::end(schedule),FeedingSlot{});
+    pendingDuration=0;nowMs=1000;hallEdges=0;lastHallMicros=0;events.clear();commits=0;std::fill(std::begin(schedule),std::end(schedule),FeedingSlot{});
     schedulerInitialized=false;
 }
 static void dueSlot(int i=0){time_t t=epoch;tm local{};localtime_r(&t,&local);schedule[i]={true,uint8_t(local.tm_hour),uint8_t(local.tm_min),uint8_t(local.tm_sec),3000,0};}
@@ -75,6 +75,11 @@ int main(){
     identity::formatMac(mac,macId);assert(std::string(macId)=="44bd8d5e19e8");
     identity::formatLegacyEfuse(0xe8195e8dbd44ULL,macId);
     assert(std::string(macId)=="e8195e8dbd44");
+    assert(logic::sameScheduleIdentity(7,0,0,3000,"Huhn",50,7,0,0,3000,"Huhn",50));
+    assert(!logic::sameScheduleIdentity(7,0,0,3000,"Huhn",50,8,0,0,3000,"Huhn",50));
+    assert(!logic::sameScheduleIdentity(7,0,0,3000,"Huhn",50,7,0,0,3000,"Huhn",60));
+    assert(logic::sameScheduleTime(7,0,1,7,0,1));
+    assert(!logic::sameScheduleTime(7,0,1,7,0,2));
     uint16_t portionMs=0;uint8_t portionTurns=0;
     assert(logic::estimatePortion(50,100,3000,0,false,50,portionMs,portionTurns));
     assert(portionMs==1500&&portionTurns==0);
@@ -103,6 +108,11 @@ int main(){
     reset();storageReady=false;assert(!startMotor(3000));reset();logOk=false;assert(!startMotor(3000));assert(pins[PIN_MOTOR_GATE]==LOW);
     reset();assert(requestMotor(3000));assert(!motorRunning);assert(!requestMotor(3000));serviceMotorRequest();assert(motorRunning);
     reset();assert(requestMotor(3000));pins[PIN_JAM_SENSOR]=HIGH;serviceMotorRequest();assert(!motorRunning);
+    // Duration-only calibration must not stop at the normal portion turn target.
+    reset();config.endSwitchEnabled=true;config.rotationsPerPortion=1;assert(requestMotor(3000,0));serviceMotorRequest();
+    assert(motorRunning&&activeRotations==0);hallEdges=1;nowMs+=1000;serviceMotor();assert(motorRunning);
+    hallEdges=2;nowMs+=1000;serviceMotor();assert(motorRunning);
+    hallEdges=3;nowMs+=1000;serviceMotor();assert(!motorRunning&&!jamActive&&events.back()==EVT_FEEDING_OK);
     reset();dueSlot();clockValid=false;checkSchedule();assert(!motorRunning&&commits==0);
     reset();dueSlot();commitOk=false;checkSchedule();assert(!motorRunning&&!storageReady);
     reset();dueSlot();checkSchedule();assert(motorRunning&&commits==1&&persisted[0].lastRunDate>0);
@@ -124,5 +134,5 @@ int main(){
     reset();config.lightBarrierEnabled=true;checkSensors();nowMs+=500;checkSensors();assert(foodLevelPercent==0);
     pins[PIN_LIGHT_BARRIER]=HIGH;checkSensors();nowMs+=500;checkSensors();assert(foodLevelPercent==100);
     pins[PIN_LIGHT_BARRIER]=LOW;checkSensors();nowMs+=500;checkSensors();assert(events.back()==EVT_SENSOR_LOW_FOOD);
-    puts("PASS: controller, scheduler, persistence-failure, reboot, sensors, ring index and timer rollover assertions");
+    puts("PASS: controller, timed calibration, schedule identity, persistence-failure, reboot, sensors and timer rollover assertions");
 }
