@@ -1,4 +1,4 @@
-# FeedMate v1.34 installieren
+# FeedMate v1.35 installieren
 
 ## Zugangsdaten
 
@@ -11,15 +11,29 @@
 Beim geprüften Gerät mit der von esptool angezeigten MAC-Adresse
 `44:bd:8d:5e:19:e8` lautet die SSID daher `FeedMate-44bd8d5e19e8`.
 
-## ESP32-C3 vollständig neu installieren
+## Komplettflash mit einem Befehl
 
-Im entpackten Projektordner ausführen; `COM6` bei Bedarf ersetzen:
+Im Projektordner PowerShell öffnen und ausführen; Port bei Bedarf anpassen:
+
+```powershell
+.\scripts\flash-c3-supermini.ps1 -Port COM6
+```
+
+Das Skript stoppt bei jedem Fehler. Es löscht auch LittleFS mit Einstellungen,
+Zeitplan und Logs.
+
+Alternativ alle Befehle einzeln ausführen:
 
 ```powershell
 pio run -e esp32c3_supermini -t clean
 pio run -e esp32c3_supermini -t erase --upload-port COM6
 pio run -e esp32c3_supermini -t upload --upload-port COM6
 pio run -e esp32c3_supermini -t uploadfs --upload-port COM6
+```
+
+Nach erfolgreichem Upload kannst du die serielle Ausgabe so öffnen:
+
+```powershell
 pio device monitor -b 115200 --port COM6
 ```
 
@@ -65,7 +79,7 @@ keine Hardware. Nur dort können erfundene Automaten hinzugefügt werden.
 
 ## Verwaltungs-WLAN-Verbindung bricht ab
 
-v1.34 schaltet das WLAN nach dem AP-Start nicht mehr aus. Die Heimnetzverbindung beginnt erst, wenn das Smartphone den Setup-AP verlassen hat. Bleibt die Verbindung dennoch instabil, sichere im seriellen Monitor (115200 Baud) die Zeilen zu `Management AP`, `Starting saved Wi-Fi connection`, `Clients` und Neustarts.
+v1.35 schaltet das WLAN nach dem AP-Start nicht mehr aus. Die Heimnetzverbindung beginnt erst, wenn das Smartphone den Setup-AP verlassen hat. Bleibt die Verbindung dennoch instabil, sichere im seriellen Monitor (115200 Baud) die Zeilen zu `Management AP`, `Starting saved Wi-Fi connection`, `Clients` und Neustarts.
 
 ## Verwaltungs-WLAN wird nicht gefunden
 

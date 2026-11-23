@@ -1,3 +1,21 @@
+# Prüfbericht FeedMate v1.35
+
+## Durchgeführte Prüfungen
+
+- ESP8266 D1 mini Firmwarebuild: bestanden (RAM 48.604 B, Flash 408.803 B).
+- JavaScript-Syntax von `data/index.html` und Demo: bestanden.
+- PowerShell-Syntax von `scripts/flash-c3-supermini.ps1`: bestanden.
+- PlatformIO erkennt `esp32c3_supermini` als gültige Umgebung. C3-Quellmodule
+  einschließlich `main.cpp` und `webserver.cpp` wurden kompiliert; der
+  vollständige Link stoppt anschließend im RISC-V-Assembler mit Windows-Fehler 5
+  („Failed to get path name“), unter anderem bei Bibliotheksobjekten.
+- Der Flash-Befehl wurde nicht am physischen Board ausgeführt. AP-Funk,
+  Motorsteuerung, RTC und Taster sind daher nicht als Hardwaretest bestätigt.
+- ZIP-Inhalt geprüft: 29 aktuelle Dateien, Flashskript enthalten, keine alten
+  Quellkopien, Buildordner oder Binärdateien.
+
+---
+
 # Prüfbericht FeedMate v1.28
 
 Der ESP32-C3 AP verwendet reinen AP-Modus ohne gespeicherte Routerdaten und eine explizite Sendeleistungsanforderung von 17 dBm. PlatformIO-Standardziel ist `esp32c3_supermini`. Die serielle Treiberbestätigung beweist keine tatsächliche Funkabstrahlung; der Nutzer meldet weiterhin, dass mehrere Geräte das Netz nicht sehen. Hardware-RF-Test bleibt offen.

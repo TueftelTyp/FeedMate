@@ -1,13 +1,15 @@
 # FeedMate – ESP32-/ESP8266-Firmware
 
-## v1.34: Gruppenschlüssel ab 4 Zeichen
+## v1.35: Komplettflash mit einem Startbefehl
 
 Bei Änderungen an WLAN, Hostname oder Zeitzone fragt die Oberfläche, ob nach
 dem Speichern neu gestartet werden soll. Andere Einstellungen benötigen keinen
 Neustart. Admin-Passwörter haben mindestens 10, Gruppenschlüssel mindestens 4
 Zeichen.
 
-## v1.32: Gruppenschlüssel mit vier Zeichen
+Die Anleitung enthält jetzt auch einen Einzeiler zum vollständigen Flashen und ein Skript, das alle Schritte geordnet ausführt.
+
+## v1.34: Gruppenschlüssel ab 4 Zeichen
 
 PlatformIO baut standardmäßig das Profil `esp32c3_supermini`. Für ESP32 wird
 die AP-Sendeleistung auf einen konservativen, expliziten Wert gesetzt und ein

@@ -1,5 +1,12 @@
 # Änderungen bis 23.11.2026
 
+## v1.35 – Vollflash per Startskript
+
+- Ein PowerShell-Startskript führt Clean, Erase, Firmware-Upload und LittleFS-
+  Upload nacheinander aus und bricht bei Fehlern ab.
+- Die Installationsanleitung enthält den Einzeiler zum Start sowie die einzelnen
+  Befehle. Gruppenschlüssel bleiben bei mindestens 4 Zeichen.
+
 ## v1.34 – Gruppenschlüssel ab 4 Zeichen
 
 - Gruppenschlüssel akzeptieren 4 bis 128 Zeichen: beim Speichern, bei API-
